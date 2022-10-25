@@ -81,7 +81,7 @@ val_test_transforms = transforms.Compose([
 ])
 
 train_set = torchvision.datasets.VOCDetection(
-    root=os.path.join(os.getcwd(), 'data')
+    root=constants.PASCAL_DATA_PATH
     ,year='2012'
     ,image_set='train'
     ,download=False
@@ -89,7 +89,7 @@ train_set = torchvision.datasets.VOCDetection(
 )
 
 val_set = torchvision.datasets.VOCDetection(
-    root=os.path.join(os.getcwd(), 'data')
+    root=constants.PASCAL_DATA_PATH
     ,year='2012'
     ,image_set='val'
     ,download=False

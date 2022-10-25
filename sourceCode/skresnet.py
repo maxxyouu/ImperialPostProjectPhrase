@@ -4,9 +4,9 @@ Reproduce the Selective-Kernel Resnet / Resnet Varient architecture
 Adapt from: https://github.com/rwightman/pytorch-image-models/tree/master/timm/models
 """
 from layers import *
-from ImperialPostProjectPhrase.sourceCode.utils import build_model_with_cfg
+from utilsTimm import build_model_with_cfg
 from skresnetBlocks import SelectiveKernelBottleneck, SelectiveKernelBasic
-from ResNetLocal import ResNet
+from ResNetTimm import ResNet
 
 
 IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)

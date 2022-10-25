@@ -1,4 +1,5 @@
 import torch
+import os
 
 USE_GPU = True
 # training device
@@ -9,6 +10,11 @@ if USE_GPU and torch.cuda.is_available():
 
 # WORK_ENV = 'COLAB'
 WORK_ENV = 'LOCAL'
+
+if WORK_ENV == 'COLAB':
+    PASCAL_DATA_PATH = '/content/drive/MyDrive/VOC2012'
+else:
+    PASCAL_DATA_PATH = os.path.join(os.getcwd(), 'data')
 
 NUM_CLASSES = 20
 CENTRE_CROP_SIZE = 256

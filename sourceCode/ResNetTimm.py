@@ -20,10 +20,10 @@ import torch.nn.functional as F
 import numpy as np
 
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from ImperialPostProjectPhrase.sourceCode.utils import build_model_with_cfg, checkpoint_seq
+from utilsTimm import build_model_with_cfg, checkpoint_seq
 # from layers import AvgPool2dSame, create_classifier # create_attn
 from layers import *
-import Constants
+import constants
 
 __all__ = ['ResNet', 'BasicBlock', 'Bottleneck']  # model_registry will add each entrypoint fn to this
 
@@ -608,12 +608,12 @@ class ResNet(nn.Module):
             """state of the art among the ones that I tried but visually it is bad
             this works!
             """
-            R = R.cpu().detach().numpy() if Constants.WORK_ENV == 'COLAB' else R.detach().numpy()
-            activations = activations.cpu().detach().numpy() if Constants.WORK_ENV == 'COLAB' else activations.detach().numpy()
+            R = R.cpu().detach().numpy() if constants.WORK_ENV == 'COLAB' else R.detach().numpy()
+            activations = activations.cpu().detach().numpy() if constants.WORK_ENV == 'COLAB' else activations.detach().numpy()
             weights = R / (np.sum(activations, axis=(2, 3), keepdims=True) + 1e-7) # per channel division operation
             
             weights = np.sum(weights, axis=(2, 3), keepdims=True)
-            return torch.tensor(weights, dtype=Constants.DTYPE, device=Constants.DEVICE)
+            return torch.tensor(weights, dtype=constants.DTYPE, device=constants.DEVICE)
 
         r_cams = []
 
@@ -711,7 +711,7 @@ class ResNet(nn.Module):
         #     maxindex = torch.argmax(x, dim=1)
         
         # # intiially R should be equal to the target logit score for each
-        # if Constants.WORK_ENV == 'COLAB':
+        # if constants.WORK_ENV == 'COLAB':
         #     R = torch.ones(x.shape).cuda()
         # else:
         #     R = torch.ones(x.shape)
@@ -727,7 +727,7 @@ class ResNet(nn.Module):
             target_logits = torch.max(x, dim=1)[0]
         
         # intiially R should be equal to the target logit score for each
-        if Constants.WORK_ENV == 'COLAB':
+        if constants.WORK_ENV == 'COLAB':
             R = torch.zeros(x.shape).cuda()
         else:
             R = torch.zeros(x.shape)
