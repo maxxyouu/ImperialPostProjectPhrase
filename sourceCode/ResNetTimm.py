@@ -20,7 +20,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from utils import build_model_with_cfg, checkpoint_seq
+from ImperialPostProjectPhrase.sourceCode.utils import build_model_with_cfg, checkpoint_seq
 # from layers import AvgPool2dSame, create_classifier # create_attn
 from layers import *
 import Constants
