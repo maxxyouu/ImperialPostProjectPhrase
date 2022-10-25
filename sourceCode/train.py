@@ -1,7 +1,6 @@
 import argparse
 import pickle
 import os
-from pickletools import optimize
 import numpy as np
 from sklearn.metrics import average_precision_score, accuracy_score, f1_score, precision_score, recall_score
 
@@ -13,6 +12,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import timm
+from skresnet import skresnext50_32x4d
 
 import constants
 from utils import collate_function
@@ -49,12 +49,16 @@ print('--earlyStoppingPatience: {}'.format(args.earlyStoppingPatience))
 print('--learningRate: {}'.format(args.learningRate))
 print('--pretrain: {}'.format(args.pretrain))
 print('--checkPointLocation: {}'.format(args.checkPointLocation))
-args.pretrain = True
+
+# Default choice for the script parameters
+if args.pretrain is None:
+    args.pretrain = True
 ########################## PARSE SCRIPT ARGUMENTS ENDS ##########################
 
 ########################## CREATE MODEL STARTS ##########################
 
 model = timm.create_model(args.model, pretrained=args.pretrain) 
+# model = skresnext50_32x4d(pretrained=args.pretrain)
 model.fc = nn.Linear(model.fc.in_features, constants.NUM_CLASSES, device=constants.DEVICE, dtype=constants.DTYPE)
 
 ########################## DATA STARTS ##########################
