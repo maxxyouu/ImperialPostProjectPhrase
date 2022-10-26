@@ -10,7 +10,7 @@ from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import average_precision_score, accuracy_score
+from sklearn.metrics import average_precision_score, accuracy_score, f1_score, precision_score, recall_score
 import pandas as pd
 
 import torch
@@ -178,7 +178,7 @@ def plot_history(train_hist, val_hist, y_label, filename, labels=["train", "vali
     plt.show()
 
 
-def get_ap_score(y_true, y_scores):
+def get_metric_scores(y_true, y_scores):
     """
     Get average precision score between 2 1-d numpy arrays
     
@@ -189,12 +189,20 @@ def get_ap_score(y_true, y_scores):
     Returns:
         sum of batch average precision
     """
-    scores = 0.0
-    
+    running_avg_ap = 0.0
+    running_precision = 0.0
+    running_recall = 0.0
+    running_f1 = 0.0
     for i in range(y_true.shape[0]):
-        scores += average_precision_score(y_true = y_true[i], y_score = y_scores[i])
-    
-    return scores
+        running_avg_ap += average_precision_score(y_true = y_true[i], y_score = y_scores[i])
+
+    y_scores[y_scores > 0.5] = 1
+    y_scores[y_scores <= 0.5] = 0
+    running_precision = precision_score(y_true = y_true, y_pred = y_scores, average='macro', zero_division=0)
+    running_recall = recall_score(y_true = y_true, y_pred = y_scores, average='macro', zero_division=0)
+    running_f1 = f1_score(y_true = y_true, y_pred = y_scores, average='macro', zero_division=0)
+
+    return running_avg_ap, running_precision, running_recall, running_f1
 
 def save_results(images, scores, columns, filename):
     """

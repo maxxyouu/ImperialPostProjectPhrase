@@ -2,7 +2,8 @@ import argparse
 import pickle
 import os
 import numpy as np
-from sklearn.metrics import average_precision_score, accuracy_score, f1_score, precision_score, recall_score
+from pyparsing import nums
+from sklearn.metrics import accuracy_score
 
 import torch
 import torch.nn as nn
@@ -15,7 +16,7 @@ import timm
 from skresnet import skresnext50_32x4d
 
 import constants
-from utils import collate_function
+from utils import collate_function, get_metric_scores
 
 ########################## PARSE SCRIPT ARGUMENTS STARTS ##########################
 my_parser = argparse.ArgumentParser(description='')
@@ -117,7 +118,7 @@ val_loader = DataLoader(
 ########################## DATA ENDS ##########################
 
 ########################## TRAIN LOOP STARTS ##########################
-def check_accuracy(model, loader, threshold=0.5):
+def validation_loss(model, loader, threshold=0.5):
     model.eval()
     avgs = []
     with torch.no_grad():
@@ -128,39 +129,41 @@ def check_accuracy(model, loader, threshold=0.5):
             logits = model(x)
             category_probs = F.sigmoid(logits)
 
-            # bookkeepings
-            category_probs[category_probs > threshold] = 1
-            category_probs[category_probs <= threshold] = 0
-            acc = accuracy_score(y.cpu().tolist(), category_probs.cpu().tolist())
-            avgs.append(acc)
+            # get the loss
 
     return sum(avgs)/len(avgs)
 
 
-def confusion_scores(model, loader, threshold=.5):
+def confusion_scores(model, loader, criterion):
     model.eval()
-    precisions, recalls, f1s = [], [], []
+    num_samples = 0
+
+    running_avg_ap = 0.0
+    running_precision = 0.0
+    running_recall = 0.0
+    running_f1 = 0.0
+    val_loss = 0.0
+
     with torch.no_grad():
 
         for x, y in loader:
             x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
             y = y.to(device=constants.DEVICE, dtype=torch.long)
             logits = model(x)
-            category_probs = F.sigmoid(logits)
 
-            # bookkeepings
-            category_probs[category_probs > threshold] = 1
-            category_probs[category_probs <= threshold] = 0
-            precision = precision_score(y.cpu().tolist(), category_probs.cpu().tolist(), average='macro')
-            recall = recall_score(y.cpu().tolist(), category_probs.cpu().tolist(), average='macro')
-            f1 = f1_score(y.cpu().tolist(), category_probs.cpu().tolist(), average='macro')
+            avg_ap, p, r, f = get_metric_scores(y, F.sigmoid(logits))
+            running_avg_ap += avg_ap
+            running_precision += p
+            running_recall += r
+            running_f1 += r
+            val_loss += criterion(logits, y).cpu().item()
+            num_samples += x.shape[0]
 
-            precisions.append(precision)
-            recalls.append(recall)
-            f1s.append(f1)
-
-    return sum(precisions)/len(precisions), sum(recalls)/len(recalls), sum(f1s)/len(f1s)
-
+    return (running_avg_ap/num_samples,
+           running_precision/num_samples,
+           running_recall/num_samples, 
+           running_f1/num_samples,
+           val_loss/num_samples)
 
 model = model.to(device=constants.DEVICE)  # move the model parameters to CPU/GPU
 optimizer = optim.Adamax(model.parameters(), lr=args.learningRate, weight_decay=1e-8)
@@ -170,27 +173,26 @@ patience, optimal_val_loss = args.earlyStoppingPatience, np.inf
 train_losses, val_losses = [], []
 for e in range(args.epochs):
     per_epoch_train_loss = []
-    for t, (x, y) in enumerate(train_loader):
-        optimizer.zero_grad()
-        model.train()
-        x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
-        y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
-        logits = model(x)
-        loss = criterion(logits, y)
+    # for t, (x, y) in enumerate(train_loader):
+    #     optimizer.zero_grad()
+    #     model.train()
+    #     x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
+    #     y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
+    #     logits = model(x)
+    #     loss = criterion(logits, y)
         
-        # post processing
-        per_epoch_train_loss.append(loss.cpu().detach().numpy())
-        loss.backward()
-        optimizer.step()
+    #     # post processing
+    #     per_epoch_train_loss.append(loss.cpu().detach().numpy())
+    #     loss.backward()
+    #     optimizer.step()
     
     # check validation accuracy
-    precision, recall, f1 = confusion_scores(model, val_loader)
-    val_acc, val_loss = check_accuracy(model, val_loader)
+    avg_ap, precision, recall, f1, val_loss = confusion_scores(model, val_loader, criterion)
 
     # record the statistics
     val_losses.append(val_loss.cpu().detach().numpy())
     train_losses.append(sum(per_epoch_train_loss) / len(per_epoch_train_loss))
-    print('Epoch: {}, val_loss {}, val_acc {}, precision {}, recall {}, f1 {}'.format(e, val_loss, val_acc, precision, recall, f1))
+    print('Epoch: {}, val_loss {}, avg_precision {}, precision {}, recall {}, f1 {}'.format(e, val_loss, avg_ap, precision, recall, f1))
     
     # early stopping mechanism
     if val_loss < optimal_val_loss:
