@@ -148,14 +148,14 @@ def confusion_scores(model, loader, criterion):
 
         for x, y in loader:
             x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
-            y = y.to(device=constants.DEVICE, dtype=torch.long)
+            y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
             logits = model(x)
 
             avg_ap, p, r, f = get_metric_scores(y, F.sigmoid(logits))
             running_avg_ap += avg_ap
             running_precision += p
             running_recall += r
-            running_f1 += r
+            running_f1 += f
             val_loss += criterion(logits, y).cpu().item()
             num_samples += x.shape[0]
 
@@ -173,24 +173,24 @@ patience, optimal_val_loss = args.earlyStoppingPatience, np.inf
 train_losses, val_losses = [], []
 for e in range(args.epochs):
     per_epoch_train_loss = []
-    # for t, (x, y) in enumerate(train_loader):
-    #     optimizer.zero_grad()
-    #     model.train()
-    #     x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
-    #     y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
-    #     logits = model(x)
-    #     loss = criterion(logits, y)
+    for t, (x, y) in enumerate(train_loader):
+        optimizer.zero_grad()
+        model.train()
+        x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
+        y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
+        logits = model(x)
+        loss = criterion(logits, y)
         
-    #     # post processing
-    #     per_epoch_train_loss.append(loss.cpu().detach().numpy())
-    #     loss.backward()
-    #     optimizer.step()
+        # post processing
+        per_epoch_train_loss.append(loss.cpu().detach().numpy())
+        loss.backward()
+        optimizer.step()
     
     # check validation accuracy
     avg_ap, precision, recall, f1, val_loss = confusion_scores(model, val_loader, criterion)
 
     # record the statistics
-    val_losses.append(val_loss.cpu().detach().numpy())
+    val_losses.append(val_loss)
     train_losses.append(sum(per_epoch_train_loss) / len(per_epoch_train_loss))
     print('Epoch: {}, val_loss {}, avg_precision {}, precision {}, recall {}, f1 {}'.format(e, val_loss, avg_ap, precision, recall, f1))
     
