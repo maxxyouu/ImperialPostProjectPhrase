@@ -11,7 +11,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import timm
-from skresnet import skresnext50_32x4d
+# from skresnet import skresnext50_32x4d
 
 import constants
 from utils import collate_function, get_metric_scores
@@ -107,6 +107,7 @@ train_loader = DataLoader(
     ,batch_size=args.batch_size
     ,shuffle=True
     ,collate_fn=collate_function
+    ,num_workers=2 if constants.WORK_ENV == 'COLAB' else 0
 )
 
 val_loader = DataLoader(
@@ -114,6 +115,7 @@ val_loader = DataLoader(
     ,batch_size=args.batch_size
     ,shuffle=True
     ,collate_fn=collate_function
+    ,num_workers=2 if constants.WORK_ENV == 'COLAB' else 0
 )
 
 ########################## DATA ENDS ##########################
