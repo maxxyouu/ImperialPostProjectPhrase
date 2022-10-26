@@ -3,7 +3,6 @@ import pickle
 import os
 import numpy as np
 from pyparsing import nums
-from sklearn.metrics import accuracy_score
 
 import torch
 import torch.nn as nn
@@ -118,27 +117,12 @@ val_loader = DataLoader(
 ########################## DATA ENDS ##########################
 
 ########################## TRAIN LOOP STARTS ##########################
-def validation_loss(model, loader, threshold=0.5):
-    model.eval()
-    avgs = []
-    with torch.no_grad():
-
-        for x, y in loader:
-            x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
-            y = y.to(device=constants.DEVICE, dtype=torch.long)
-            logits = model(x)
-            category_probs = F.sigmoid(logits)
-
-            # get the loss
-
-    return sum(avgs)/len(avgs)
-
 
 def confusion_scores(model, loader, criterion):
     model.eval()
     num_samples = 0
 
-    running_avg_ap = 0.0
+    running_avg_ap = 0.0 # is label 1 correctly idenfified
     running_precision = 0.0
     running_recall = 0.0
     running_f1 = 0.0
@@ -209,15 +193,4 @@ for e in range(args.epochs):
         break
 ########################## TRAIN LOOP ENDS ##########################
 
-
-
-
-
-
-
-
-
-
-
-
-
+print('Training Completed.')
