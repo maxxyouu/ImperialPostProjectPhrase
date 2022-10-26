@@ -25,7 +25,7 @@ my_parser.add_argument('--batch_size',
                         type=int, default=2,
                         help='batch size to be used for training / testing')             
 my_parser.add_argument('--epochs',
-                        type=int, default=100,
+                        type=int, default=3,
                         help='training epochs')   
 my_parser.add_argument('--earlyStoppingPatience',
                         type=int, default=10,
@@ -62,6 +62,9 @@ if not os.path.exists(args.checkPointLocation):
 model = timm.create_model(args.model, pretrained=args.pretrain) 
 # model = skresnext50_32x4d(pretrained=args.pretrain)
 model.fc = nn.Linear(model.fc.in_features, constants.NUM_CLASSES, device=constants.DEVICE, dtype=constants.DTYPE)
+
+saved_model = torch.load('./VOC2012_trained_models/skresnext50_32x4d_pretrained.pt', map_location=constants.DEVICE)
+model.load_state_dict(saved_model)
 
 ########################## DATA STARTS ##########################
 train_transforms = transforms.Compose(
@@ -107,15 +110,13 @@ train_loader = DataLoader(
     ,batch_size=args.batch_size
     ,shuffle=True
     ,collate_fn=collate_function
-    ,num_workers=2 if constants.WORK_ENV == 'COLAB' else 0
 )
 
 val_loader = DataLoader(
-    train_set
+    val_set
     ,batch_size=args.batch_size
     ,shuffle=True
     ,collate_fn=collate_function
-    ,num_workers=2 if constants.WORK_ENV == 'COLAB' else 0
 )
 
 ########################## DATA ENDS ##########################
@@ -139,7 +140,7 @@ def confusion_scores(model, loader, criterion):
             y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
             logits = model(x)
 
-            avg_ap, p, r, f = get_metric_scores(y, torch.sigmoid(logits))
+            avg_ap, p, r, f = get_metric_scores(y.cpu().numpy(), torch.sigmoid(logits).cpu().numpy())
             running_avg_ap += avg_ap
             running_precision += p
             running_recall += r
@@ -181,11 +182,12 @@ for e in range(args.epochs):
     # record the statistics
     val_losses.append(val_loss)
     train_losses.append(sum(per_epoch_train_loss) / len(per_epoch_train_loss))
-    print('Epoch: {}, val_loss {}, avg_precision {}, precision {}, recall {}, f1 {}'.format(e, val_loss, avg_ap, precision, recall, f1))
+    # print('Epoch: {}, val_loss {}, avg_precision {}, precision {}, recall {}, f1 {}'.format(e, val_loss, avg_ap, precision, recall, f1))
+    print('Epoch: {}, val_loss {}, avg_precision {}'.format(e, val_loss, avg_ap))
     
     # early stopping mechanism
     if val_loss < optimal_val_loss:
-        print('Saving model')
+        print('Epoch {} ------ Saving model'.format(e))
         model_dest = os.path.join(args.checkPointLocation, '{}{}.pt'.format(args.model, '_pretrained' if args.pretrain else ''))
         torch.save(model.state_dict(), model_dest)
         optimal_val_loss = val_loss

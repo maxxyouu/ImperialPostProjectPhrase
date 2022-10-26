@@ -12,7 +12,7 @@ if USE_GPU and torch.cuda.is_available():
 WORK_ENV = 'LOCAL'
 
 if WORK_ENV == 'COLAB':
-    PASCAL_DATA_PATH = '/content/drive/MyDrive/VOC2012'
+    PASCAL_DATA_PATH = '/content/drive/MyDrive/'
     SAVED_MODEL_PATH = '/content/drive/MyDrive/VOC2012_trained_models'
 else:
     PASCAL_DATA_PATH = os.path.join(os.getcwd(), 'data')
