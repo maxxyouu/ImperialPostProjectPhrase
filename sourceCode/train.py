@@ -38,7 +38,7 @@ my_parser.add_argument('--pretrain',
                         type=bool, action=argparse.BooleanOptionalAction,
                         help='whether to use a pretrained model')
 my_parser.add_argument('--checkPointLocation',
-                        type=str, default='',
+                        type=str, default=constants.SAVED_MODEL_PATH,
                         help='Checkpoint location') 
 args = my_parser.parse_args()
 
@@ -53,6 +53,9 @@ print('--checkPointLocation: {}'.format(args.checkPointLocation))
 # Default choice for the script parameters
 if args.pretrain is None:
     args.pretrain = True
+
+if not os.path.exists(args.checkPointLocation):
+    os.makedirs(args.checkPointLocation)
 ########################## PARSE SCRIPT ARGUMENTS ENDS ##########################
 
 ########################## CREATE MODEL STARTS ##########################
@@ -181,7 +184,7 @@ for e in range(args.epochs):
     # early stopping mechanism
     if val_loss < optimal_val_loss:
         print('Saving model')
-        model_dest = os.path.join(args.checkPointLocation, '{}.pt'.format(args.model))
+        model_dest = os.path.join(args.checkPointLocation, '{}{}.pt'.format(args.model, '_pretrained' if args.pretrain else ''))
         torch.save(model.state_dict(), model_dest)
         optimal_val_loss = val_loss
         patience = args.earlyStoppingPatience

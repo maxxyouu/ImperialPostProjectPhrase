@@ -13,8 +13,10 @@ WORK_ENV = 'LOCAL'
 
 if WORK_ENV == 'COLAB':
     PASCAL_DATA_PATH = '/content/drive/MyDrive/VOC2012'
+    SAVED_MODEL_PATH = '/content/drive/MyDrive/VOC2012_trained_models'
 else:
     PASCAL_DATA_PATH = os.path.join(os.getcwd(), 'data')
+    SAVED_MODEL_PATH = os.path.join(os.getcwd(), 'VOC2012_trained_models')
 
 NUM_CLASSES = 20
 CENTRE_CROP_SIZE = 256
