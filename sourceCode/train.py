@@ -2,11 +2,10 @@ import argparse
 import pickle
 import os
 import numpy as np
-from pyparsing import nums
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -133,12 +132,12 @@ def confusion_scores(model, loader, criterion):
 
     with torch.no_grad():
 
-        for x, y in loader:
+        for x, y in tqdm(loader):
             x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
             y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
             logits = model(x)
 
-            avg_ap, p, r, f = get_metric_scores(y, F.sigmoid(logits))
+            avg_ap, p, r, f = get_metric_scores(y, torch.sigmoid(logits))
             running_avg_ap += avg_ap
             running_precision += p
             running_recall += r
@@ -160,7 +159,7 @@ patience, optimal_val_loss = args.earlyStoppingPatience, np.inf
 train_losses, val_losses = [], []
 for e in range(args.epochs):
     per_epoch_train_loss = []
-    for t, (x, y) in enumerate(train_loader):
+    for x, y in tqdm(train_loader):
         optimizer.zero_grad()
         model.train()
         x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
