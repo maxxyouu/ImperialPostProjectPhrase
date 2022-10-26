@@ -14,7 +14,8 @@ import timm
 # from skresnet import skresnext50_32x4d
 
 import constants
-from utils import collate_function, get_metric_scores
+# from utils import encode_labels
+from utils import collate_function, get_metric_scores, encode_labels
 
 ########################## PARSE SCRIPT ARGUMENTS STARTS ##########################
 my_parser = argparse.ArgumentParser(description='')
@@ -95,6 +96,7 @@ train_set = torchvision.datasets.VOCDetection(
     ,image_set='train'
     ,download=False
     ,transform=train_transforms
+    ,target_transform=encode_labels
 )
 
 val_set = torchvision.datasets.VOCDetection(
@@ -103,20 +105,21 @@ val_set = torchvision.datasets.VOCDetection(
     ,image_set='val'
     ,download=False
     ,transform=val_test_transforms
+    ,target_transform=encode_labels
 )
 
 train_loader = DataLoader(
     train_set
     ,batch_size=args.batch_size
     ,shuffle=True
-    ,collate_fn=collate_function
+    # ,collate_fn=collate_function
 )
 
 val_loader = DataLoader(
     val_set
     ,batch_size=args.batch_size
     ,shuffle=True
-    ,collate_fn=collate_function
+    # ,collate_fn=collate_function
 )
 
 ########################## DATA ENDS ##########################
