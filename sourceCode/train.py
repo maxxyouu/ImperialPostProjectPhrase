@@ -155,6 +155,7 @@ model = model.to(device=constants.DEVICE)  # move the model parameters to CPU/GP
 optimizer = optim.Adamax(model.parameters(), lr=args.learningRate, weight_decay=1e-8)
 criterion = nn.BCEWithLogitsLoss()
 
+print('Training Began.')
 patience, optimal_val_loss = args.earlyStoppingPatience, np.inf
 train_losses, val_losses = [], []
 for e in range(args.epochs):
