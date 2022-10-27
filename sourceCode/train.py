@@ -30,7 +30,7 @@ my_parser.add_argument('--epochs',
                         type=int, default=3,
                         help='training epochs')   
 my_parser.add_argument('--earlyStoppingPatience',
-                        type=int, default=10,
+                        type=int, default=20,
                         help='early stopping patience to terminate the training process')   
 my_parser.add_argument('--learningRate',
                         type=float, default=0.001,
@@ -65,11 +65,10 @@ torch.manual_seed(rng_seed)
 ########################## CREATE MODEL STARTS ##########################
 
 model = timm.create_model(args.model, pretrained=args.pretrain) 
-# model = skresnext50_32x4d(pretrained=args.pretrain)
 model.fc = nn.Linear(model.fc.in_features, constants.NUM_CLASSES, device=constants.DEVICE, dtype=constants.DTYPE)
 
-saved_model = torch.load('./VOC2012_trained_models/skresnext50_32x4d_pretrained.pt', map_location=constants.DEVICE)
-model.load_state_dict(saved_model)
+# saved_model = torch.load('./VOC2012_trained_models/skresnext50_32x4d_pretrained.pt', map_location=constants.DEVICE)
+# model.load_state_dict(saved_model)
 
 ########################## DATA STARTS ##########################
 train_transforms = transforms.Compose(
