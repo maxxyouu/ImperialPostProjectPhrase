@@ -11,6 +11,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import timm
+import sklearn
 # from skresnet import skresnext50_32x4d
 
 import constants
@@ -56,6 +57,9 @@ if args.pretrain is None:
 
 if not os.path.exists(args.checkPointLocation):
     os.makedirs(args.checkPointLocation)
+
+rng_seed = 90
+torch.manual_seed(rng_seed)
 ########################## PARSE SCRIPT ARGUMENTS ENDS ##########################
 
 ########################## CREATE MODEL STARTS ##########################
@@ -82,7 +86,7 @@ train_transforms = transforms.Compose(
         [constants.DATA_STD_R,constants.DATA_STD_G, constants.DATA_STD_B])
     ]
 )
-val_test_transforms = transforms.Compose([
+test_transforms = transforms.Compose([
     transforms.ToTensor(), 
     transforms.CenterCrop(constants.CENTRE_CROP_SIZE),
     transforms.Normalize(
@@ -90,41 +94,35 @@ val_test_transforms = transforms.Compose([
     [constants.DATA_STD_R,constants.DATA_STD_G, constants.DATA_STD_B])
 ])
 
-train_set = torchvision.datasets.VOCDetection(
+trainval_set = torchvision.datasets.VOCDetection(
     root=constants.PASCAL_DATA_PATH
     ,year='2012'
-    ,image_set='train'
+    ,image_set='trainval'
     ,download=False
     ,transform=train_transforms
     ,target_transform=encode_labels
 )
 
-val_set = torchvision.datasets.VOCDetection(
-    root=constants.PASCAL_DATA_PATH
-    ,year='2012'
-    ,image_set='val'
-    ,download=False
-    ,transform=val_test_transforms
-    ,target_transform=encode_labels
-)
+train_size = int(len(trainval_set)*0.8)
+val_size = len(trainval_set) - train_size
+train_set, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(rng_seed))
 
 train_loader = DataLoader(
     train_set
     ,batch_size=args.batch_size
     ,shuffle=True
-    # ,collate_fn=collate_function
 )
 
 val_loader = DataLoader(
     val_set
     ,batch_size=args.batch_size
     ,shuffle=True
-    # ,collate_fn=collate_function
 )
 
 ########################## DATA ENDS ##########################
 
 ########################## TRAIN LOOP STARTS ##########################
+
 
 def confusion_scores(model, loader, criterion):
     model.eval()
