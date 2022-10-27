@@ -537,7 +537,7 @@ class ResNet(nn.Module):
             return per_image_normalized_sensitivity, per_image_normalized_conservation
 
 
-    def forward(self, x, mode='output', target_class = [None], eval_axiom=False, plusplusMode=False, lrp='CLRP', internal=False, attendCAM={}, alpha=1):
+    def forward(self, x, mode='output', target_class = [None], eval_axiom=False, axiom_version=False, lrp='CLRP', internal=False, attendCAM={}, alpha=1):
         """_summary_
 
         Args:
@@ -619,7 +619,7 @@ class ResNet(nn.Module):
 
         # LAYER 4 CAM
         if 'layer4' in mode:
-            if plusplusMode:
+            if axiom_version:
                 r_weight4 = _lrp_partial_xgrad_weights(R4, layer4)
             else:
                 r_weight4 = torch.mean(R4, dim=(2, 3), keepdim=True)
@@ -636,7 +636,7 @@ class ResNet(nn.Module):
         R3 = self.layer4.relprop(R4, alpha)
         if 'layer3' in mode:
              # NOTE: propagate the LRP to the end of layer 3 and beginning of layer 4
-            if plusplusMode:
+            if axiom_version:
                 r_weight3 = _lrp_partial_xgrad_weights(R3, layer3)
             else:
                 r_weight3 = torch.mean(R3, dim=(2, 3), keepdim=True)
@@ -653,7 +653,7 @@ class ResNet(nn.Module):
         R2 = self.layer3.relprop(R3, alpha)
         if 'layer2' in mode:
             
-            if plusplusMode:
+            if axiom_version:
                 r_weight2 = _lrp_partial_xgrad_weights(R2, layer2)
             else:
                 r_weight2 = torch.mean(R2, dim=(2, 3), keepdim=True)
@@ -671,7 +671,7 @@ class ResNet(nn.Module):
         R1 = self.layer2.relprop(R2, alpha)
         if 'layer1' in mode:
             
-            if plusplusMode:
+            if axiom_version:
                 r_weight1 = _lrp_partial_xgrad_weights(R1, layer1)
             else:
                 r_weight1 = torch.mean(R1, dim=(2, 3), keepdim=True)

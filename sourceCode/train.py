@@ -1,5 +1,4 @@
 import argparse
-import pickle
 import os
 import numpy as np
 from tqdm import tqdm
@@ -11,12 +10,9 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import timm
-import sklearn
-# from skresnet import skresnext50_32x4d
 
 import constants
-# from utils import encode_labels
-from utils import collate_function, get_metric_scores, encode_labels
+from utils import get_metric_scores, encode_labels
 
 ########################## PARSE SCRIPT ARGUMENTS STARTS ##########################
 my_parser = argparse.ArgumentParser(description='')
@@ -58,8 +54,7 @@ if args.pretrain is None:
 if not os.path.exists(args.checkPointLocation):
     os.makedirs(args.checkPointLocation)
 
-rng_seed = 90
-torch.manual_seed(rng_seed)
+torch.manual_seed(constants.SEED)
 ########################## PARSE SCRIPT ARGUMENTS ENDS ##########################
 
 ########################## CREATE MODEL STARTS ##########################
@@ -103,7 +98,7 @@ trainval_set = torchvision.datasets.VOCDetection(
 
 train_size = int(len(trainval_set)*0.8)
 val_size = len(trainval_set) - train_size
-train_set, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(rng_seed))
+train_set, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
 
 train_loader = DataLoader(
     train_set
@@ -162,7 +157,7 @@ patience, optimal_val_loss = args.earlyStoppingPatience, np.inf
 train_losses, val_losses = [], []
 for e in range(args.epochs):
     per_epoch_train_loss = []
-    for x, y in tqdm(train_loader):
+    for x, (filename, y) in tqdm(train_loader):
         optimizer.zero_grad()
         model.train()
         x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU

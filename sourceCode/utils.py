@@ -17,6 +17,7 @@ import torch
 import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
+import constants
 
 object_categories = ['aeroplane', 'bicycle', 'bird', 'boat',
                      'bottle', 'bus', 'car', 'cat', 'chair',
@@ -60,6 +61,7 @@ def encode_labels(target):
         torch tensor encoding labels as 1/0 vector
     """
     # refer to the sample xml file format
+    filename = target['annotation']['filename']
     ls = target['annotation']['object']
   
     j = []
@@ -75,7 +77,7 @@ def encode_labels(target):
     k = np.zeros(len(object_categories))
     k[j] = 1 # set the corresponding category to 1
   
-    return torch.from_numpy(k)
+    return filename, torch.from_numpy(k)
 
 def collate_function(inputs):
     _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
@@ -293,7 +295,19 @@ def get_classification_accuracy(gt_csv_path, scores_csv_path, store_filename):
     plt.ylabel("Mean Tail Accuracy")
     plt.savefig(store_filename)
     plt.show()
-            
+
+def max_min_lrp_normalize(Ac):
+    Ac_shape = Ac.shape
+    AA = Ac.view(Ac.size(0), -1)
+    AA -= AA.min(1, keepdim=True)[0]
+    AA /= (1e-7 + AA.max(1, keepdim=True)[0])
+    scaled_ac = AA.view(Ac_shape)
+    return scaled_ac
+
+def denorm(tensor):
+    means = torch.tensor([constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B])
+    stds = torch.tensor([constants.DATA_STD_R, constants.DATA_STD_G, constants.DATA_STD_B])
+    return tensor.mul(stds).add(means)
 
 #get_classification_accuracy("../models/resnet18/results.csv", "../models/resnet18/gt.csv", "roc-curve.png")
 
