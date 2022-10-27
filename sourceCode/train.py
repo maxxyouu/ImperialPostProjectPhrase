@@ -78,7 +78,6 @@ train_transforms = transforms.Compose(
         transforms.CenterCrop(constants.CENTRE_CROP_SIZE), # transforms.CenterCrop((336, 350)), 230 is the number that has the largest square in a circle
         transforms.RandomHorizontalFlip(),
         transforms.RandomPerspective(), # perspective invarient
-        transforms.GaussianBlur(kernel_size=(5, 9)), # meant for distant object highlight
         transforms.RandomRotation((0, 270)), # rotation invarient
         transforms.RandomAutocontrast(0.25),
         transforms.Normalize(
