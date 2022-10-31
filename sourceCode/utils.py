@@ -309,9 +309,16 @@ def max_min_lrp_normalize(Ac):
     scaled_ac = AA.view(Ac_shape)
     return scaled_ac
 
-def denorm(tensor):
-    means = torch.tensor([constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B]).view(1, 3, 1, 1)
-    stds = torch.tensor([constants.DATA_STD_R, constants.DATA_STD_G, constants.DATA_STD_B]).view(1, 3, 1, 1)
+def denorm(tensor, dataset=constants.IMGNET2012):
+    if dataset == constants.IMGNET2012:
+        means = [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B]
+        stds = [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B]
+    elif dataset == constants.PASCAL_VOC2012:
+        means = [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B] 
+        stds = [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B]
+
+    means = torch.tensor(means).view(1, 3, 1, 1)
+    stds = torch.tensor(stds).view(1, 3, 1, 1)
     return tensor.mul(stds).add(means)
 
 def threshold(x, inverse=False):
@@ -319,7 +326,7 @@ def threshold(x, inverse=False):
     # mean_ = np.mean(x, axis=(2, 3), keepdims=True)
     # std_ = np.std(x, axis=(2,3), keepdims=True)
     mean_, std_ = np.mean(x), np.std(x)
-    thresh = mean_ +std_
+    thresh = mean_ #+ *std_
     if inverse:
         x = (x <= thresh)
     else:
