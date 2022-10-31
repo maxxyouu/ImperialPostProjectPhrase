@@ -150,7 +150,7 @@ def confusion_scores(model, loader, criterion):
 
 model = model.to(device=constants.DEVICE)  # move the model parameters to CPU/GPU
 optimizer = optim.Adamax(model.parameters(), lr=args.learningRate, weight_decay=1e-8)
-criterion = nn.BCEWithLogitsLoss()
+criterion = nn.BCEWithLogitsLoss(reduction='mean')
 
 print('Training Began.')
 patience, optimal_val_loss = args.earlyStoppingPatience, np.inf

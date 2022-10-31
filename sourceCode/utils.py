@@ -79,6 +79,11 @@ def encode_labels(target):
   
     return filename, torch.from_numpy(k)
 
+def encode_segmentation_labels(target):
+    transformer = transforms.Compose([transforms.PILToTensor()
+                                    ,transforms.CenterCrop(constants.CENTRE_CROP_SIZE)])
+    return transformer(target)
+
 def collate_function(inputs):
     _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
     targets = torch.stack([encode_labels(_input[1]) for _input in inputs], dim=0)
@@ -305,9 +310,21 @@ def max_min_lrp_normalize(Ac):
     return scaled_ac
 
 def denorm(tensor):
-    means = torch.tensor([constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B])
-    stds = torch.tensor([constants.DATA_STD_R, constants.DATA_STD_G, constants.DATA_STD_B])
+    means = torch.tensor([constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B]).view(1, 3, 1, 1)
+    stds = torch.tensor([constants.DATA_STD_R, constants.DATA_STD_G, constants.DATA_STD_B]).view(1, 3, 1, 1)
     return tensor.mul(stds).add(means)
+
+def threshold(x, inverse=False):
+    # NOTE: threshold per images
+    # mean_ = np.mean(x, axis=(2, 3), keepdims=True)
+    # std_ = np.std(x, axis=(2,3), keepdims=True)
+    mean_, std_ = np.mean(x), np.std(x)
+    thresh = mean_ +std_
+    if inverse:
+        x = (x <= thresh)
+    else:
+        x = (x>thresh)
+    return x
 
 #get_classification_accuracy("../models/resnet18/results.csv", "../models/resnet18/gt.csv", "roc-curve.png")
 

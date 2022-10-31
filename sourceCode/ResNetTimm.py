@@ -537,7 +537,8 @@ class ResNet(nn.Module):
             return per_image_normalized_sensitivity, per_image_normalized_conservation
 
 
-    def forward(self, x, mode='output', target_class = [None], eval_axiom=False, axiom_version=False, lrp='CLRP', internal=False, attendCAM={}, alpha=1):
+    def forward(self, x, mode='output', target_class = [None], eval_axiom=False, axiomMode=False, 
+                lrp='CLRP', internal=False, attendCAM={}, alpha=1, correctPredictionOnly=False, labels=None):
         """_summary_
 
         Args:
@@ -619,7 +620,7 @@ class ResNet(nn.Module):
 
         # LAYER 4 CAM
         if 'layer4' in mode:
-            if axiom_version:
+            if axiomMode:
                 r_weight4 = _lrp_partial_xgrad_weights(R4, layer4)
             else:
                 r_weight4 = torch.mean(R4, dim=(2, 3), keepdim=True)
@@ -636,7 +637,7 @@ class ResNet(nn.Module):
         R3 = self.layer4.relprop(R4, alpha)
         if 'layer3' in mode:
              # NOTE: propagate the LRP to the end of layer 3 and beginning of layer 4
-            if axiom_version:
+            if axiomMode:
                 r_weight3 = _lrp_partial_xgrad_weights(R3, layer3)
             else:
                 r_weight3 = torch.mean(R3, dim=(2, 3), keepdim=True)
@@ -653,7 +654,7 @@ class ResNet(nn.Module):
         R2 = self.layer3.relprop(R3, alpha)
         if 'layer2' in mode:
             
-            if axiom_version:
+            if axiomMode:
                 r_weight2 = _lrp_partial_xgrad_weights(R2, layer2)
             else:
                 r_weight2 = torch.mean(R2, dim=(2, 3), keepdim=True)
@@ -671,7 +672,7 @@ class ResNet(nn.Module):
         R1 = self.layer2.relprop(R2, alpha)
         if 'layer1' in mode:
             
-            if axiom_version:
+            if axiomMode:
                 r_weight1 = _lrp_partial_xgrad_weights(R1, layer1)
             else:
                 r_weight1 = torch.mean(R1, dim=(2, 3), keepdim=True)
@@ -722,23 +723,30 @@ class ResNet(nn.Module):
         #     # R[i, maxindex[i]] = target_logits[i]
         # return R
 
+        # if maxindex == [None]:
+        #     maxindex = torch.argmax(x, dim=1)
+        #     # target_logits = torch.max(x, dim=1)[0]
+        
+        # # intiially R should be equal to the target logit score for each
+        # if constants.WORK_ENV == 'COLAB':
+        #     R = torch.zeros(x.shape).cuda()
+        # else:
+        #     R = torch.zeros(x.shape)
+
+        # for i in range(R.size(0)):
+        #     mask = np.zeros(R[i,:].shape,dtype=bool) #np.ones_like(a,dtype=bool)
+        #     mask[maxindex[i]] = True
+        #     R[i, mask] = maxindex[i]
+        #     R[i, ~mask] =  -maxindex[i] / self.num_classes
+
+        # return R
+
         if maxindex == [None]:
             maxindex = torch.argmax(x, dim=1)
-            target_logits = torch.max(x, dim=1)[0]
-        
-        # intiially R should be equal to the target logit score for each
-        if constants.WORK_ENV == 'COLAB':
-            R = torch.zeros(x.shape).cuda()
-        else:
-            R = torch.zeros(x.shape)
-
+        R = torch.ones(x.shape)#.cuda()
+        R /= -self.num_classes
         for i in range(R.size(0)):
-            mask = np.zeros(R[i,:].shape,dtype=bool) #np.ones_like(a,dtype=bool)
-            mask[maxindex[i]] = True
-
-            R[i, mask] = target_logits[i]
-            R[i, ~mask] =  -target_logits[i] / self.num_classes
-
+            R[i, maxindex[i]] = 1
         return R
     
     def SGCLR(self, x, maxindex = [None]):
