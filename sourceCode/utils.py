@@ -320,13 +320,13 @@ def denorm(tensor, dataset=constants.IMGNET2012):
     means = torch.tensor(means).view(1, 3, 1, 1)
     stds = torch.tensor(stds).view(1, 3, 1, 1)
     return tensor.mul(stds).add(means)
+    
 
 def threshold(x, inverse=False):
     # NOTE: threshold per images
-    # mean_ = np.mean(x, axis=(2, 3), keepdims=True)
-    # std_ = np.std(x, axis=(2,3), keepdims=True)
+
     mean_, std_ = np.mean(x), np.std(x)
-    thresh = mean_ #+ *std_
+    thresh = mean_ + std_
     if inverse:
         x = (x <= thresh)
     else:
