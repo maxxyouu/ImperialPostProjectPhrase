@@ -6,12 +6,14 @@ Created on Tue Mar 12 20:52:33 2019
 """
 import os
 import math
-from tqdm import tqdm
+from copy import deepcopy
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import average_precision_score, accuracy_score, f1_score, precision_score, recall_score
 import pandas as pd
+import cv2
+
 
 import torch
 import torchvision
@@ -301,14 +303,6 @@ def get_classification_accuracy(gt_csv_path, scores_csv_path, store_filename):
     plt.savefig(store_filename)
     plt.show()
 
-def max_min_lrp_normalize(Ac):
-    Ac_shape = Ac.shape
-    AA = Ac.view(Ac.size(0), -1)
-    AA -= AA.min(1, keepdim=True)[0]
-    AA /= (1e-7 + AA.max(1, keepdim=True)[0])
-    scaled_ac = AA.view(Ac_shape)
-    return scaled_ac
-
 def denorm(tensor, dataset=constants.IMGNET2012):
     if dataset == constants.IMGNET2012:
         means = [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B]
@@ -335,6 +329,59 @@ def threshold(x, inverse=False):
 
 #get_classification_accuracy("../models/resnet18/results.csv", "../models/resnet18/gt.csv", "roc-curve.png")
 
+def max_min_lrp_normalize(Ac):
+    Ac_shape = Ac.shape
+    AA = Ac.view(Ac.size(0), -1)
+    AA -= AA.min(1, keepdim=True)[0]
+    AA /= AA.max(1, keepdim=True)[0]
+    scaled_ac = AA.view(Ac_shape)
+    return scaled_ac
+
+def tensor2image(x, size=constants.IMGNET_CENTRE_CROP_SIZE):
+    x = max_min_lrp_normalize(x).detach().cpu().numpy()
+    x = deepcopy(x)
+    results = np.empty((x.shape[0], size, size))
+    for i in range(x.shape[0]):
+        results[i, :] = cv2.resize(np.transpose(x[i,:], (1, 2, 0)).reshape((x.shape[-1], x.shape[-1])), (size, size))
+
+    return results
+
+def get_source_img(_filename, img_size=constants.IMGNET_CENTRE_CROP_SIZE):
+    img = cv2.imread(_filename,1)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img,(img_size,img_size))
+    return img
+
+def get_all_imgs(filenames, indices, img_size=constants.IMGNET_CENTRE_CROP_SIZE):
+    """get all the original images from the source
+
+    Args:
+        filenames (_type_): a whole list of filenames
+        indices (_type_): a subset of indices that retrive the files
+        img_size (_type_, optional): image size to be resized to. Defaults to constants.IMGNET_CENTRE_CROP_SIZE.
+
+    Returns:
+        _type_: np array of shape (batch size, channel size, width, height)
+    """
+    filenames, indices = np.array(filenames), np.array(indices)
+    file_paths = filenames[indices]
+    
+    batch_imgs = np.empty((len(file_paths), 3, img_size, img_size))
+    for i, (file_path, _) in enumerate(file_paths):
+        img = get_source_img(file_path, img_size)
+        img = np.transpose(img, (2,0,1))
+        img = np.float32(img)/255
+        batch_imgs[i, :] = img
+
+    return batch_imgs
+
+def get_correct_predictions(Yci, input, labels):
+    x, y = deepcopy(input), deepcopy(labels)
+    correct_prediction_indices = (torch.argmax(Yci, dim=1) == y)
+    Yci = Yci[correct_prediction_indices,:]
+    Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
+    x = x[correct_prediction_indices, :]
+    return x, y
 
 if __name__ == '__main__':
     # get the mean and variance
