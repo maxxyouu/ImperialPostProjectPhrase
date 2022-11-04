@@ -27,7 +27,7 @@ def soft_explanation_map(img, cam):
     """
     return img * np.maximum(cam, 0)
 
-def axiom_paper_average_drop_explanation_map(img, cam, labels):
+def axiom_paper_average_drop_explanation_map(img, cam, inplace_normalize: Callable):
     """
 
     Args:
@@ -46,13 +46,19 @@ def axiom_paper_average_drop_explanation_map(img, cam, labels):
     mean = np.array([constants.IMGNET_DATA_MEAN_R, 
                      constants.IMGNET_DATA_MEAN_G, 
                      constants.IMGNET_DATA_MEAN_B]).reshape(1,3,1,1)
-
     perturbed_image = (1-feature_masks)*img + mean*mask
+    plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
+
+    perturbed_image = torch.from_numpy(perturbed_image)
+    for i in range(perturbed_image.shape[0]):
+        inplace_normalize(perturbed_image[i, :])
+
     # plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
-    return perturbed_image
+    perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
+    return perturbed_image.requires_grad_(True)
 
 
-def get_explanation_map(exp_map: Callable, img, cam, labels, inplace_normalize):
+def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize=imgnet_inplace_transform):
     """
     Args:
         exp_map (Callable): either hard_threshold_explanation_map or soft_explanation_map
@@ -60,13 +66,8 @@ def get_explanation_map(exp_map: Callable, img, cam, labels, inplace_normalize):
         cam (tensor): _description_
     """
     # explanation_map = img*threshold(cam)
-    explanation_map = exp_map(img, cam, labels)
-    explanation_map = torch.from_numpy(explanation_map)
-    for i in range(explanation_map.shape[0]):
-        inplace_normalize(explanation_map[i, :])
-    #TODO: might be experiment with not normalize the perturbed sample
-    return explanation_map.requires_grad_(True)
-
+    explanation_map = exp_map(img, cam, inplace_normalize)
+    return explanation_map
 
 def segmentation_evaluation():
     pass
@@ -94,8 +95,8 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
     
         print('--------- Forward Passing the Explanation Maps ------------')
         original_imgs = get_all_imgs(filenames, indices=indices[STARTING_INDEX:x.shape[0]])
-        xmaps = get_explanation_map(axiom_paper_average_drop_explanation_map, original_imgs, cams, y, normalize_transform)
-        _, Oci = model(xmaps, mode=args.target_layer, target_class=[None], axiomMode=True if args.XRelevanceCAM else False,  alpha=args.alpha)
+        xmaps = get_explanation_map(axiom_paper_average_drop_explanation_map, original_imgs, cams, normalize_transform)
+        _, Oci = model(xmaps, mode=args.target_layer, target_class=[None], axiomMode=True if args.XRelevanceCAM else False)
         Oci = torch.max(Oci, dim=1)[0].unsqueeze(1)
 
         # collect metrics data
