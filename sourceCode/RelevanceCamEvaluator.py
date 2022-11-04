@@ -49,7 +49,10 @@ my_parser.add_argument('--alpha',
                         help='alpha in the propagation rule')  
 my_parser.add_argument('--dataset',
                         type=str, default=constants.IMGNET2012,
-                        help='dataset to be tested')                    
+                        help='dataset to be tested')
+my_parser.add_argument('--model_metric',
+                        type=str, default='',
+                        help='AD, IC, XAD')
 args = my_parser.parse_args()
 
 print('--model: {}'.format(args.model))
@@ -57,11 +60,19 @@ print('--pickle_name: {}'.format(args.pickle_name))
 print('--state_dict_path: {}'.format(args.state_dict_path))
 print('--target_layer: {}'.format(args.target_layer))
 print('--batch_size: {}'.format(args.batch_size))
-print('--XRelevanceCAM: {}'.format(args.XRelevanceCAM))
-print('--alpha: {}'.format(args.alpha))
-print('--dataset: {}'.format(args.dataset))
+
 if not args.XRelevanceCAM and constants.WORK_ENV == 'LOCAL': # for debug purposes
     args.XRelevanceCAM = False
+print('--XRelevanceCAM: {}'.format(args.XRelevanceCAM))
+
+print('--alpha: {}'.format(args.alpha))
+print('--dataset: {}'.format(args.dataset))
+
+if len(args.model_metric) > 0:
+    print('--model_metric: {}'.format(args.model_metric))
+else:
+    args.model_metric = None
+
 CAM_NAME = 'RelevanceCAM' if not args.XRelevanceCAM else 'XRelevanceCAM'
 ########################## PARSE SCRIPT ARGUMENTS ENDS ##########################
 
@@ -235,9 +246,14 @@ STARTING_INDEX = 0
 #     #BOOKING
 #     STARTING_INDEX += x.shape[0]
 
+if args.model_metric == 'AD':
+    metric = Average_drop_score()
+elif args.model_metric == 'IC':
+    metric = Increase_confidence_score()
+elif args.model_metric == 'XAD':
+    metric = Axiom_style_confidence_drop_logger()
 
-acd = Axiom_style_confidence_drop_logger()
-model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=acd)
+model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric)
 
 ########################## EVALUATION ENDS ##########################
 
