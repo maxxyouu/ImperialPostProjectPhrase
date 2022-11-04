@@ -28,16 +28,6 @@ object_categories = ['aeroplane', 'bicycle', 'bird', 'boat',
                      'sheep', 'sofa', 'train', 'tvmonitor']
 
 
-imgnet_inplace_transform = transforms.Normalize(
-                [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
-                [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B], inplace=True)
-
-# voc2012_inplace_transform = transforms.Normalize(
-#                 [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
-#                 [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B], inplace=True)
-
-
-
 def get_categories(labels_dir=os.path.join(os.getcwd(), 'data/VOCdevkit/VOC2012/ImageSets/Main')):
     """
     Get the object categories
