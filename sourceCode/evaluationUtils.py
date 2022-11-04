@@ -58,7 +58,7 @@ def axiom_paper_average_drop_explanation_map(img, cam, inplace_normalize: Callab
     return perturbed_image.requires_grad_(True)
 
 
-def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize=imgnet_inplace_transform):
+def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
     """
     Args:
         exp_map (Callable): either hard_threshold_explanation_map or soft_explanation_map
