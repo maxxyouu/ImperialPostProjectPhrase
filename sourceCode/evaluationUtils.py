@@ -38,41 +38,19 @@ def axiom_paper_average_drop_explanation_map(img, cam, labels):
     Returns:
         _type_: _description_
     """
-    salient_features_mask = threshold(cam, inverse=False) # all the features except the most important one
-    
-    # only the salient feature values appear the mask
-    mask = cam * salient_features_mask 
-    
-    # duplicate the image value along the channel dimension
-    mask = np.broadcast_to(mask, shape=(mask.shape[0], 3, mask.shape[-1], mask.shape[-1]))
-    
-   # the mean of each channel of one image
+
+    feature_masks = threshold(cam, inverse=False) # all the features except the most important one
+    feature_masks = np.expand_dims(feature_masks, axis=1)
+    mask = np.broadcast_to(feature_masks, shape=(feature_masks.shape[0], 3, feature_masks.shape[-1], feature_masks.shape[-1]))
+
     mean = np.array([constants.IMGNET_DATA_MEAN_R, 
                      constants.IMGNET_DATA_MEAN_G, 
                      constants.IMGNET_DATA_MEAN_B]).reshape(1,3,1,1)
 
-    # mean*mask: broadcast each mean to each channel of an RGB image
-    # (1-mask)*img: remove the saliency features for each channel of an image
-    perturbed_image = (1-mask)*img + mean*mask
-    # visualize the perturbed image
-    # plt.imshow(np.transpose(img[0,:], (1,2,0)))
-
-    # plt.imshow(np.transpose(perturbed_image[0,:], (1,2,0)))
-    # plt.imshow(cam[-1,:])
-    # plt.close()
-    # plt.imshow(mask[-1,:])
-    # plt.close()
-    # plt.imshow(np.transpose((mean*mask)[-1,:], (1,2,0)))
-    # plt.close()
+    perturbed_image = (1-feature_masks)*img + mean*mask
     # plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
-    plt.imshow(np.transpose(((1-mask)*img)[-1,:], (1,2,0)))
-
-
-
-
-
-
     return perturbed_image
+
 
 def get_explanation_map(exp_map: Callable, img, cam, labels, inplace_normalize):
     """
