@@ -144,11 +144,50 @@ class Increase_confidence_score:
         self.drop = 0
         self.N = 0
         self.per_batch_stats = 0
-    
 
+    def get_avg(self):
+        return 100 * self.drop / self.N
+    
+    def update(self, Yci, Oci):
+        """
+        CASE: the explanation map remove the confounded features that confuse the classifier.
+        => Oci > Yci
+        """
+        indicator = Yci < Oci
+        batch_size = indicator.shape[0]
+        
+        # aggregate the batch statistics    
+        increase_in_confidence = np.sum(indicator, axis=0)
+        self.per_batch_stats = increase_in_confidence
+        
+        self.N += batch_size
+        self.drop += increase_in_confidence
+    
+    
 class Average_drop_score:
     def __init__(self):
         self.drop = 0
         self.N = 0
         self.per_batch_stats = 0
+    
+    def get_avg(self):
+        return 100 * self.drop / self.N
 
+    def update(self, Yci, Oci):
+        """case where Yci > Oci: 
+        
+        -Oci is the score with explanation map only and should maintain high confidence score
+        because it includes the most relevance part from the full input image
+
+        -A.D the lower the better
+        """
+        percentage_drop = (Yci - Oci) / Yci
+        percentage_drop = np.maximum(percentage_drop, 0)
+
+        # aggregate the batch statistics
+        batch_size = percentage_drop.shape[0]
+        batch_pd = np.sum(percentage_drop, axis=0)
+        self.per_batch_stats = batch_pd
+    
+        self.N += batch_size
+        self.drop += batch_pd
