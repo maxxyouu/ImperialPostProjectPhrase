@@ -46,16 +46,14 @@ def axiom_paper_average_drop_explanation_map(img, cam, inplace_normalize: Callab
     mean = np.array([constants.IMGNET_DATA_MEAN_R, 
                      constants.IMGNET_DATA_MEAN_G, 
                      constants.IMGNET_DATA_MEAN_B]).reshape(1,3,1,1)
+
     perturbed_image = (1-feature_masks)*img + mean*mask
     plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
 
     perturbed_image = torch.from_numpy(perturbed_image)
-    for i in range(perturbed_image.shape[0]):
-        inplace_normalize(perturbed_image[i, :])
 
     # plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
-    perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
-    return perturbed_image.requires_grad_(True)
+    return perturbed_image
 
 
 def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
@@ -66,8 +64,11 @@ def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
         cam (tensor): _description_
     """
     # explanation_map = img*threshold(cam)
-    explanation_map = exp_map(img, cam, inplace_normalize)
-    return explanation_map
+    perturbed_image = exp_map(img, cam, inplace_normalize)
+    for i in range(perturbed_image.shape[0]):
+        inplace_normalize(perturbed_image[i, :])
+    perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
+    return perturbed_image.requires_grad_(True)
 
 def segmentation_evaluation():
     pass
