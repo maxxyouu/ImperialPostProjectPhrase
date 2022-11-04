@@ -72,7 +72,7 @@ def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
 def segmentation_evaluation():
     pass
 
-def model_metric_evaluation(args, val_set, val_loader, model, normalize_transform):
+def model_metric_evaluation(args, val_set, val_loader, model, normalize_transform, metrics_logger:Callable):
     '''
     log the A.D, I.C, and Confidence Drop scores
 
@@ -81,8 +81,6 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
     filenames = val_set.dataset.imgs
     indices = val_set.indices
     STARTING_INDEX = 0
-
-    axiom_style_ad_logger = Axiom_style_confidence_drop_logger()
 
     for x, y in val_loader:
 
@@ -102,10 +100,14 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
         # collect metrics data
         Yci = Yci.detach().numpy() if constants.WORK_ENV == 'LOCAL' else Yci.cpu().detach().numpy()
         Oci = Oci.detach().numpy() if constants.WORK_ENV == 'LOCAL' else Oci.cpu().detach().numpy()
-        axiom_style_ad_logger.update(Yci, Oci)
-        
+        metrics_logger.update(Yci, Oci)   
+
+        # print per batch statistic
+        print('Per batch statistics: {}'.format(metrics_logger.per_batch_stats))
         STARTING_INDEX += x.shape[0]
 
+    # print the stats:
+    print('Average Statistics: {}'.format(metrics_logger.get_average()))
     return
 
 def confidence_drop_evaluation():
@@ -128,6 +130,8 @@ class Axiom_style_confidence_drop_logger:
 
         # for local statistics
         self.per_batch_stats = 0
+        print('Axiom-style average confidence drop metrics')
+
     def update(self, I, I_tild):
         n = I.shape[0] # batch size
         batch_drop =  np.sum((I - I_tild) / I, axis=0)
@@ -144,6 +148,8 @@ class Increase_confidence_score:
         self.drop = 0
         self.N = 0
         self.per_batch_stats = 0
+        print('Increase in Confidence metric')
+
 
     def get_avg(self):
         return 100 * self.drop / self.N
@@ -169,6 +175,8 @@ class Average_drop_score:
         self.drop = 0
         self.N = 0
         self.per_batch_stats = 0
+        print('Average drop metric')
+
     
     def get_avg(self):
         return 100 * self.drop / self.N

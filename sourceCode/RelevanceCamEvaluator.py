@@ -127,11 +127,6 @@ if args.dataset == constants.IMGNET2012:
     val_size = len(val_set) - train_size
     _, val_set = torch.utils.data.random_split(val_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
 
-    # means = torch.from_numpy(np.array([constants.IMGNET_DATA_MEAN_R, 
-    #                                    constants.IMGNET_DATA_MEAN_G, 
-    #                                    constants.IMGNET_DATA_MEAN_B]), 
-    #                         device=constants.DEVICE, dtype=constants.DTYPE)
-
     inplace_normalize = transforms.Normalize([constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
                                              [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B], inplace=True)
 
@@ -155,11 +150,6 @@ elif args.dataset == constants.PASCAL_VOC2012:
     train_size = int(len(trainval_set)*0.8)
     val_size = len(trainval_set) - train_size
     _, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
-
-    # means = torch.from_numpy(np.array([constants.PASCAL_DATA_MEAN_R, 
-    #                                    constants.PASCAL_DATA_MEAN_G, 
-    #                                    constants.PASCAL_DATA_MEAN_B]), 
-    #                         device=constants.DEVICE, dtype=constants.DTYPE)
 
     inplace_normalize = transforms.Normalize([constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
                                              [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B], inplace=True)
@@ -246,8 +236,8 @@ STARTING_INDEX = 0
 #     STARTING_INDEX += x.shape[0]
 
 
-
-model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize)
+acd = Axiom_style_confidence_drop_logger()
+model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=acd)
 
 ########################## EVALUATION ENDS ##########################
 
