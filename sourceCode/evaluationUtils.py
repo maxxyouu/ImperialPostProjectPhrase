@@ -92,17 +92,15 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
             x, Yci, cams = get_correct_predictions(Yci, x, y, cams)
         else:
             # only need to highest Yci scores
-            Yci = Yci[torch.argmax(Yci, dim=1) == y, :]
             Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
 
         cams = tensor2image(cams)
     
         print('--------- Forward Passing the Explanation Maps ------------')
-        original_imgs = get_all_imgs(filenames, indices=indices[STARTING_INDEX:x.shape[0]])
+        original_imgs = get_all_imgs(filenames, indices=indices[STARTING_INDEX:STARTING_INDEX+x.shape[0]])
         xmaps = get_explanation_map(xmap_extractor, original_imgs, cams, normalize_transform)
         _, Oci = model(xmaps, mode=args.target_layer, target_class=[None], axiomMode=True if args.XRelevanceCAM else False)
         Oci = torch.max(Oci, dim=1)[0].unsqueeze(1)
-
         # collect metrics data
         Yci = Yci.cpu().detach().numpy()
         Oci = Oci.cpu().detach().numpy()

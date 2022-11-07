@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import numpy as np
+import constants
 
 from layers import *
 import torch
@@ -282,7 +283,7 @@ class ResNet(nn.Module):
     def CLRP(self, x, maxindex = [None]):
         if maxindex == [None]:
             maxindex = torch.argmax(x, dim=1)
-        R = torch.ones(x.shape)#.cuda()
+        R = torch.ones(x.shape).cuda() if constants.WORK_ENV == 'COLAB' else torch.ones(x.shape)
         R /= -self.num_classes
         for i in range(R.size(0)):
             R[i, maxindex[i]] = 1
@@ -315,11 +316,11 @@ class ResNet(nn.Module):
             """state of the art among the ones that I tried but visually it is bad
             this works!
             """
-            R = R.detach().numpy()
-            activations = activations.detach().numpy()
+            R = R.detach().numpy() if constants.WORK_ENV == 'LOCAL' else R.cpu().detach().numpy()
+            activations = activations.detach().numpy() if constants.WORK_ENV == 'LOCAL' else activations.cpu().detach().numpy()
             weights = R / (np.sum(activations, axis=(2, 3), keepdims=True) + 1e-7) # per channel division operation
             weights = np.sum(weights, axis=(2, 3), keepdims=True)
-            return torch.tensor(weights)
+            return torch.tensor(weights, dtype=constants.DTYPE, device=constants.DEVICE)
 
 
         if mode == 'layer4':
