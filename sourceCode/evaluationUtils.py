@@ -147,7 +147,7 @@ class Increase_confidence_score:
         print('Increase in Confidence metric')
 
 
-    def get_avg(self):
+    def get_average(self):
         return 100 * self.drop / self.N
     
     def update(self, Yci, Oci):
@@ -174,7 +174,7 @@ class Average_drop_score:
         print('Average drop metric')
 
     
-    def get_avg(self):
+    def get_average(self):
         return 100 * self.drop / self.N
 
     def update(self, Yci, Oci):
