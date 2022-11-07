@@ -71,7 +71,7 @@ def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
 def segmentation_evaluation():
     pass
 
-def model_metric_evaluation(args, val_set, val_loader, model, normalize_transform, metrics_logger:Callable):
+def model_metric_evaluation(args, val_set, val_loader, model, normalize_transform, metrics_logger:Callable, xmap_extractor:Callable):
     '''
     log the A.D, I.C, and Confidence Drop scores
 
@@ -99,7 +99,7 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
     
         print('--------- Forward Passing the Explanation Maps ------------')
         original_imgs = get_all_imgs(filenames, indices=indices[STARTING_INDEX:x.shape[0]])
-        xmaps = get_explanation_map(axiom_paper_average_drop_explanation_map, original_imgs, cams, normalize_transform)
+        xmaps = get_explanation_map(xmap_extractor, original_imgs, cams, normalize_transform)
         _, Oci = model(xmaps, mode=args.target_layer, target_class=[None], axiomMode=True if args.XRelevanceCAM else False)
         Oci = torch.max(Oci, dim=1)[0].unsqueeze(1)
 
@@ -162,7 +162,7 @@ class Increase_confidence_score:
         
         # aggregate the batch statistics    
         increase_in_confidence = np.sum(indicator, axis=0)
-        self.per_batch_stats = increase_in_confidence
+        self.per_batch_stats = 100 * increase_in_confidence / batch_size
         
         self.N += batch_size
         self.drop += increase_in_confidence
@@ -193,7 +193,7 @@ class Average_drop_score:
         # aggregate the batch statistics
         batch_size = percentage_drop.shape[0]
         batch_pd = np.sum(percentage_drop, axis=0)
-        self.per_batch_stats = batch_pd
+        self.per_batch_stats = 100*batch_pd / batch_size
     
         self.N += batch_size
         self.drop += batch_pd

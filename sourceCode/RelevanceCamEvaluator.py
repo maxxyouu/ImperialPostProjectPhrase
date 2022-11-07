@@ -36,7 +36,7 @@ my_parser.add_argument('--state_dict_path',
                         type=str, default=os.path.join(constants.SAVED_MODEL_PATH, default_model_name+'_pretrained.pt'),
                         help='location of the weight pickle file') 
 my_parser.add_argument('--target_layer',
-                        type=str, default='layer1',
+                        type=str, default='layer2',
                         help='cam layer for explanation') 
 my_parser.add_argument('--batch_size',
                         type=int, default=3,
@@ -186,9 +186,13 @@ STARTING_INDEX = 0
 
 if args.model_metric == 'AD':
     metric = Average_drop_score()
+    explanation_map_extractor = hard_threshold_explanation_map
 elif args.model_metric == 'IC':
     metric = Increase_confidence_score()
+    explanation_map_extractor = hard_threshold_explanation_map
 elif args.model_metric == 'XAD':
     metric = Axiom_style_confidence_drop_logger()
+    explanation_map_extractor = axiom_paper_average_drop_explanation_map
 
-model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric)
+
+model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric, xmap_extractor=explanation_map_extractor)
