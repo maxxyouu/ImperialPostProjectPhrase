@@ -111,14 +111,6 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
     print('Average Statistics: {}'.format(metrics_logger.get_average()))
     return
 
-def confidence_drop_evaluation():
-    pass
-
-def average_increase_evaluation():
-    pass
-
-def average_drop_evaluation():
-    pass
 
 ### Metrics
 

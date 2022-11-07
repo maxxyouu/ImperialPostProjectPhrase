@@ -181,6 +181,16 @@ filenames = val_set.dataset.imgs
 indices = val_set.indices
 STARTING_INDEX = 0
 
+if args.model_metric == 'AD':
+    metric = Average_drop_score()
+elif args.model_metric == 'IC':
+    metric = Increase_confidence_score()
+elif args.model_metric == 'XAD':
+    metric = Axiom_style_confidence_drop_logger()
+
+model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric)
+
+
 # subset_dataset.indices
 # for (x, y) in tqdm(val_loader):
 
@@ -245,15 +255,6 @@ STARTING_INDEX = 0
     
 #     #BOOKING
 #     STARTING_INDEX += x.shape[0]
-
-if args.model_metric == 'AD':
-    metric = Average_drop_score()
-elif args.model_metric == 'IC':
-    metric = Increase_confidence_score()
-elif args.model_metric == 'XAD':
-    metric = Axiom_style_confidence_drop_logger()
-
-model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric)
 
 ########################## EVALUATION ENDS ##########################
 
