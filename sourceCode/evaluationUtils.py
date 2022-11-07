@@ -11,19 +11,19 @@ def hard_threshold_explanation_map(img, cam):
     """
     used for select which layer of the relevance cam to be used
     """
-    return torch.from_numpy(img*threshold(cam))
+    return torch.from_numpy(img*np.expand_dims(threshold(cam), axis=1))
 
 def hard_inverse_threshold_explanation_map(img, cam):
     """
     used for select which layer of the relevance cam to be used
     """
-    return torch.from_numpy(img*threshold(cam, inverse=True))
+    return torch.from_numpy(img*np.expand_dims(threshold(cam, inverse=True), axis=1))
 
 def soft_explanation_map(img, cam):
     """in the grad cam paper
     used for examine the metrics AD, AI
     """
-    return torch.from_numpy(img * np.maximum(cam, 0))
+    return torch.from_numpy(img * np.expand_dims(np.maximum(cam, 0), axis=1))
 
 def axiom_paper_average_drop_explanation_map(img, cam):
     """
