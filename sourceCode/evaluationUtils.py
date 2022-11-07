@@ -11,23 +11,21 @@ def hard_threshold_explanation_map(img, cam):
     """
     used for select which layer of the relevance cam to be used
     """
-    explanation_map = img*threshold(cam)
-    return explanation_map
+    return torch.from_numpy(img*threshold(cam))
 
 def hard_inverse_threshold_explanation_map(img, cam):
     """
     used for select which layer of the relevance cam to be used
     """
-    explanation_map = img*threshold(cam, inverse=True)
-    return explanation_map
+    return torch.from_numpy(img*threshold(cam, inverse=True))
 
 def soft_explanation_map(img, cam):
     """in the grad cam paper
     used for examine the metrics AD, AI
     """
-    return img * np.maximum(cam, 0)
+    return torch.from_numpy(img * np.maximum(cam, 0))
 
-def axiom_paper_average_drop_explanation_map(img, cam, inplace_normalize: Callable):
+def axiom_paper_average_drop_explanation_map(img, cam):
     """
 
     Args:
@@ -64,7 +62,7 @@ def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
         cam (tensor): _description_
     """
     # explanation_map = img*threshold(cam)
-    perturbed_image = exp_map(img, cam, inplace_normalize)
+    perturbed_image = exp_map(img, cam)
     for i in range(perturbed_image.shape[0]):
         inplace_normalize(perturbed_image[i, :])
     perturbed_image = perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
