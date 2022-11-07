@@ -88,8 +88,7 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
 
         # NOTE: retrieve the one that correctly classified only
         if args.correctPredictionsOnly:
-            x, y = get_correct_predictions(Yci, x, y)
-            cams = cams[torch.argmax(Yci, dim=1) == y, :]
+            x, Yci, cams = get_correct_predictions(Yci, x, y, cams)
         else:
             # only need to highest Yci scores
             Yci = Yci[torch.argmax(Yci, dim=1) == y, :]

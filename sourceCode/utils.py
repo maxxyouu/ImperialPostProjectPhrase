@@ -376,13 +376,13 @@ def get_all_imgs(filenames, indices, img_size=constants.IMGNET_CENTRE_CROP_SIZE)
     return batch_imgs
 
 def get_correct_predictions(Yci, input, labels, cams):
-    x, y = deepcopy(input), deepcopy(labels)#, deepcopy(cams)
+    x, y = deepcopy(input), deepcopy(labels)
     correct_prediction_indices = (torch.argmax(Yci, dim=1) == y)
     Yci = Yci[correct_prediction_indices,:]
     Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
     x = x[correct_prediction_indices, :]
-    cams_copy = cams_copy[correct_prediction_indices, :]
-    return x, Yci#, cams
+    cams = cams[correct_prediction_indices, :]
+    return x, Yci, cams
 
 if __name__ == '__main__':
     # get the mean and variance

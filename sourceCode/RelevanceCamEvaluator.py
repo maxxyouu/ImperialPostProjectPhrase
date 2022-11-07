@@ -64,9 +64,13 @@ print('--state_dict_path: {}'.format(args.state_dict_path))
 print('--target_layer: {}'.format(args.target_layer))
 print('--batch_size: {}'.format(args.batch_size))
 
-if not args.XRelevanceCAM and constants.WORK_ENV == 'LOCAL': # for debug purposes
+if not args.XRelevanceCAM: # and constants.WORK_ENV == 'LOCAL': # for debug purposes
     args.XRelevanceCAM = False
 print('--XRelevanceCAM: {}'.format(args.XRelevanceCAM))
+
+if not args.correctPredictionsOnly:
+    args.correctPredictionsOnly = False
+print('--correctPredictionsOnly: {}'.format(args.correctPredictionsOnly))
 
 print('--alpha: {}'.format(args.alpha))
 print('--dataset: {}'.format(args.dataset))
