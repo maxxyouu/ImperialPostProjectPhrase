@@ -156,7 +156,7 @@ elif args.dataset == constants.PASCAL_VOC2012:
         ,image_set='trainval'
         ,download=False
         ,transform=transforms.Compose([
-            transforms.Resize(constants.PASCAL_CENTRE_CROP_SIZE)
+            transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE,constants.PASCAL_CENTRE_CROP_SIZE))
             ,transforms.ToTensor()
             ,transforms.Normalize(
                 [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
