@@ -133,7 +133,7 @@ if args.dataset == constants.IMGNET2012:
         root=constants.IMGNET_DATA_PATH
         ,split='val'
         ,transform=transforms.Compose([
-            transforms.Resize(constants.IMGNET_CENTRE_CROP_SIZE)
+            transforms.Resize((constants.IMGNET_CENTRE_CROP_SIZE, constants.IMGNET_CENTRE_CROP_SIZE))
             ,transforms.ToTensor()
             ,transforms.Normalize(
                 [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
