@@ -44,6 +44,9 @@ my_parser.add_argument('--batch_size',
 my_parser.add_argument('--XRelevanceCAM',
                         type=bool, action=argparse.BooleanOptionalAction,
                         help='use xrelevance cam')
+my_parser.add_argument('--correctPredictionsOnly',
+                        type=bool, action=argparse.BooleanOptionalAction,
+                        help='only evaluate on the correct predictions only')
 my_parser.add_argument('--alpha',
                         type=int, default=1,
                         help='alpha in the propagation rule')  
@@ -51,7 +54,7 @@ my_parser.add_argument('--dataset',
                         type=str, default=constants.IMGNET2012,
                         help='dataset to be tested')
 my_parser.add_argument('--model_metric',
-                        type=str, default='',
+                        type=str, default='AD',
                         help='AD, IC, XAD')
 args = my_parser.parse_args()
 
@@ -189,86 +192,3 @@ elif args.model_metric == 'XAD':
     metric = Axiom_style_confidence_drop_logger()
 
 model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric)
-
-
-# subset_dataset.indices
-# for (x, y) in tqdm(val_loader):
-
-#     forward_handler = target_layer.register_forward_hook(forward_hook)
-#     backward_handler = target_layer.register_full_backward_hook(backward_hook)
-#     x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
-#     y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
-
-#     print('--------- Forward Passing ------------')
-#     # use the label to propagate NOTE: another case
-
-#     internal_R_cams, output = model(x, args.target_layer, [None], axiomMode=True if args.XRelevanceCAM else False)
-#     r_cams = internal_R_cams[0] # for each image in a batch
-#     r_cams = tensor2image(r_cams)
-
-#     predictions = torch.argmax(output, dim=1)
-
-#     # denormalize the image NOTE: must be placed after forward passing
-#     x = denorm(x)
-#     print('--------- Generating relevance-cam Heatmap')
-#     for i in range(x.shape[0]):   
-
-#         #ignore the wrong prediction
-#         if predictions[i] != y[i]:
-#             continue
-
-#         _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename
-#         dest = os.path.join(origin_dest, '{}/{}'.format(args.model, _filename[:-4]))
-#         img = get_source_img(_filename)
-
-#         # save the original image in parallel
-#         if not os.path.exists(dest):
-#             os.makedirs(dest)
-#             plt.axis('off')
-#             plt.imshow(img)
-#             plt.savefig(os.path.join(dest, 'original.jpeg'), bbox_inches='tight')
-    
-#         plt.ioff()
-#         logger = logging.getLogger()
-#         old_level = logger.level
-#         logger.setLevel(100)
-
-#         # save the saliency map of the image
-#         r_cam = r_cams[i,:]
-#         mask = plt.imshow(r_cam, cmap='seismic')
-#         overlayed_image = plt.imshow(img, alpha=.5)
-#         plt.axis('off')
-#         plt.savefig(os.path.join(dest, '{}_{}_{}_seismic.jpeg'.format(CAM_NAME, args.target_layer, predictions[i])), bbox_inches='tight')
-
-#         # save the segmentation of the image
-#         segmented_image = img*threshold(r_cam)[...,np.newaxis]
-#         segmented_image = plt.imshow(segmented_image)
-#         plt.axis('off')
-#         plt.savefig(os.path.join(dest, '{}_{}_{}_segmentation.jpeg'.format(CAM_NAME, args.target_layer, predictions[i])), bbox_inches='tight')
-#         plt.close()
-
-#         logger.setLevel(old_level)
-
-#         # update the sequential index for next iterations
-#         forward_handler.remove()
-#         backward_handler.remove()
-    
-#     #BOOKING
-#     STARTING_INDEX += x.shape[0]
-
-########################## EVALUATION ENDS ##########################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

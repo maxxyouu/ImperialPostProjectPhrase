@@ -48,7 +48,7 @@ def axiom_paper_average_drop_explanation_map(img, cam, inplace_normalize: Callab
                      constants.IMGNET_DATA_MEAN_B]).reshape(1,3,1,1)
 
     perturbed_image = (1-feature_masks)*img + mean*mask
-    plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
+    # plt.imshow(np.transpose(perturbed_image[-1,:], (1,2,0)))
 
     perturbed_image = torch.from_numpy(perturbed_image)
 
@@ -67,7 +67,7 @@ def get_explanation_map(exp_map: Callable, img, cam, inplace_normalize):
     perturbed_image = exp_map(img, cam, inplace_normalize)
     for i in range(perturbed_image.shape[0]):
         inplace_normalize(perturbed_image[i, :])
-    perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
+    perturbed_image = perturbed_image.to(dtype=constants.DTYPE, device=constants.DEVICE)
     return perturbed_image.requires_grad_(True)
 
 def segmentation_evaluation():
@@ -89,7 +89,14 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
         cams = cams[0] # cams for each image
 
         # NOTE: retrieve the one that correctly classified only
-        # x, y = get_correct_predictions(Yci, x, y)
+        if args.correctPredictionsOnly:
+            x, y = get_correct_predictions(Yci, x, y)
+            cams = cams[torch.argmax(Yci, dim=1) == y, :]
+        else:
+            # only need to highest Yci scores
+            Yci = Yci[torch.argmax(Yci, dim=1) == y, :]
+            Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
+
         cams = tensor2image(cams)
     
         print('--------- Forward Passing the Explanation Maps ------------')
@@ -99,12 +106,12 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
         Oci = torch.max(Oci, dim=1)[0].unsqueeze(1)
 
         # collect metrics data
-        Yci = Yci.detach().numpy() if constants.WORK_ENV == 'LOCAL' else Yci.cpu().detach().numpy()
-        Oci = Oci.detach().numpy() if constants.WORK_ENV == 'LOCAL' else Oci.cpu().detach().numpy()
+        Yci = Yci.cpu().detach().numpy()
+        Oci = Oci.cpu().detach().numpy()
         metrics_logger.update(Yci, Oci)   
 
         # print per batch statistic
-        print('Per batch statistics: {}'.format(metrics_logger.per_batch_stats))
+        print('Per batch statistics: {}'.format(metrics_logger.per_batch_stats.item()))
         STARTING_INDEX += x.shape[0]
 
     # print the stats:
