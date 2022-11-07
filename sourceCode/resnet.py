@@ -289,7 +289,19 @@ class ResNet(nn.Module):
             R[i, maxindex[i]] = 1
         return R
 
-    def forward(self, x, mode='output', target_class = [None], axiomMode=False, correctPredictionOnly=False):
+    def SGCLR(self, x, maxindex = [None]):
+        softmax = nn.Softmax(dim=1) # create a function
+        post_softmax = softmax(x)
+        if maxindex == [None]:
+            maxindex = torch.argmax(x, dim=1)
+        R = torch.ones(x.shape).cuda() if constants.WORK_ENV == 'COLAB' else torch.ones(x.shape)
+        yt = torch.max(post_softmax, dim=1)[0].unsqueeze(1)
+        R = -yt * post_softmax # otherwise
+        for i in range(R.size(0)):
+            R[i, maxindex[i]] = yt[i] * (1-yt[i]) # n = t
+        return R
+
+    def forward(self, x, mode='output', target_class = [None], axiomMode=False, contrastive_mode='CLRP'):
 
         x = self.conv1(x)
         x = self.bn1(x)
@@ -307,7 +319,11 @@ class ResNet(nn.Module):
         if mode == 'output':
             return z
 
-        R = self.CLRP(z, target_class)
+        # R = self.CLRP(z, target_class)
+        if contrastive_mode == 'SGLRP':
+            R = self.SGCLR(z, target_class)
+        elif contrastive_mode == 'CLRP':
+            R = self.CLRP(z, target_class)
         R = self.fc.relprop(R, 1)
         R = R.reshape_as(self.avgpool.Y)
         R4 = self.avgpool.relprop(R, 1)
