@@ -82,7 +82,8 @@ def model_metric_evaluation(args, val_set, val_loader, model, normalize_transfor
     STARTING_INDEX = 0
 
     for x, y in val_loader:
-
+        x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device, e.g. GPU
+        y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
         cams, Yci = model(x, mode=args.target_layer, target_class=[None], axiomMode=True if args.XRelevanceCAM else False)
         cams = cams[0] # cams for each image
 
