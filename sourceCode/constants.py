@@ -13,7 +13,7 @@ WORK_ENV = 'LOCAL'
 
 if WORK_ENV == 'COLAB':
     PASCAL_DATA_PATH = '/content/drive/MyDrive/'
-    IMGNET_DATA_PATH = '/content/drive/MyDrive/'
+    IMGNET_DATA_PATH = '/content/drive/MyDrive/ImageNet2012'
     SAVED_MODEL_PATH = '/content/drive/MyDrive/VOC2012_trained_models'
     STORAGE_PATH = '/content/drive/MyDrive/'
 else:

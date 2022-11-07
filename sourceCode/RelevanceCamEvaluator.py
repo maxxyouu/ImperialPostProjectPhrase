@@ -9,7 +9,7 @@ import cv2
 import logging
 
 
-from skresnet import skresnext50_32x4d
+# from skresnet import skresnext50_32x4d
 from resnet import resnet50
 from layers import *
 from utils import *
@@ -133,7 +133,7 @@ if args.dataset == constants.IMGNET2012:
         root=constants.IMGNET_DATA_PATH
         ,split='val'
         ,transform=transforms.Compose([
-            transforms.Resize((224,224))
+            transforms.Resize(constants.IMGNET_CENTRE_CROP_SIZE)
             ,transforms.ToTensor()
             ,transforms.Normalize(
                 [constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
