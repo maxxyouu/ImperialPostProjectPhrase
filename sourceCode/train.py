@@ -69,22 +69,22 @@ model.fc = nn.Linear(model.fc.in_features, constants.NUM_CLASSES, device=constan
 train_transforms = transforms.Compose(
     [
         transforms.ToTensor(), 
-        transforms.CenterCrop(constants.CENTRE_CROP_SIZE), # transforms.CenterCrop((336, 350)), 230 is the number that has the largest square in a circle
+        transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE, constants.PASCAL_CENTRE_CROP_SIZE)), # transforms.CenterCrop((336, 350)), 230 is the number that has the largest square in a circle
         transforms.RandomHorizontalFlip(),
         transforms.RandomPerspective(), # perspective invarient
         transforms.RandomRotation((0, 270)), # rotation invarient
         transforms.RandomAutocontrast(0.25),
         transforms.Normalize(
-        [constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B], 
-        [constants.DATA_STD_R,constants.DATA_STD_G, constants.DATA_STD_B])
+            [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
+            [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B])
     ]
 )
 test_transforms = transforms.Compose([
     transforms.ToTensor(), 
-    transforms.CenterCrop(constants.CENTRE_CROP_SIZE),
+    transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE, constants.PASCAL_CENTRE_CROP_SIZE)), # transforms.CenterCrop((336, 350)), 230 is the number that has the largest square in a circle
     transforms.Normalize(
-    [constants.DATA_MEAN_R, constants.DATA_MEAN_G, constants.DATA_MEAN_B], 
-    [constants.DATA_STD_R,constants.DATA_STD_G, constants.DATA_STD_B])
+        [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
+        [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B])
 ])
 
 trainval_set = torchvision.datasets.VOCDetection(
