@@ -26,7 +26,7 @@ my_parser.add_argument('--epochs',
                         type=int, default=3,
                         help='training epochs')   
 my_parser.add_argument('--earlyStoppingPatience',
-                        type=int, default=20,
+                        type=int, default=10,
                         help='early stopping patience to terminate the training process')   
 my_parser.add_argument('--learningRate',
                         type=float, default=0.001,
@@ -60,7 +60,7 @@ torch.manual_seed(constants.SEED)
 ########################## CREATE MODEL STARTS ##########################
 
 model = timm.create_model(args.model, pretrained=args.pretrain) 
-model.fc = nn.Linear(model.fc.in_features, constants.NUM_CLASSES, device=constants.DEVICE, dtype=constants.DTYPE)
+model.fc = nn.Linear(model.fc.in_features, constants.PASCAL_NUM_CLASSES, device=constants.DEVICE, dtype=constants.DTYPE)
 
 # saved_model = torch.load('./VOC2012_trained_models/skresnext50_32x4d_pretrained.pt', map_location=constants.DEVICE)
 # model.load_state_dict(saved_model)
@@ -129,7 +129,7 @@ def confusion_scores(model, loader, criterion):
 
     with torch.no_grad():
 
-        for x, y in tqdm(loader):
+        for x, (_, y) in tqdm(loader):
             x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
             y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
             logits = model(x)
