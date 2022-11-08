@@ -51,7 +51,7 @@ my_parser.add_argument('--alpha',
                         type=int, default=1,
                         help='alpha in the propagation rule')  
 my_parser.add_argument('--dataset',
-                        type=str, default=constants.IMGNET2012,
+                        type=str, default=constants.PASCAL_VOC2012,
                         help='dataset to be tested')
 my_parser.add_argument('--model_metric',
                         type=str, default='AD',
@@ -147,7 +147,7 @@ if args.dataset == constants.IMGNET2012:
 
     inplace_normalize = transforms.Normalize([constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
                                              [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B], inplace=True)
-
+    filenames = val_set.dataset.imgs
 
 elif args.dataset == constants.PASCAL_VOC2012:
     trainval_set = torchvision.datasets.VOCDetection(
@@ -162,7 +162,7 @@ elif args.dataset == constants.PASCAL_VOC2012:
                 [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
                 [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B])
             ])
-        ,target_transform=encode_segmentation_labels # for segmentation only
+        #,target_transform=encode_segmentation_labels # for segmentation only
     )
     # only a subset of data are used
     train_size = int(len(trainval_set)*0.8)
@@ -171,6 +171,7 @@ elif args.dataset == constants.PASCAL_VOC2012:
 
     inplace_normalize = transforms.Normalize([constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
                                              [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B], inplace=True)
+    filenames = val_set.dataset.images
 
 sequentialSampler = SequentialSampler(val_set)
 val_loader = DataLoader(
@@ -184,7 +185,6 @@ val_loader = DataLoader(
 
 ########################## EVALUATION STARTS ##########################
 print('Evaluation Begin')
-filenames = val_set.dataset.imgs
 indices = val_set.indices
 STARTING_INDEX = 0
 
@@ -199,4 +199,69 @@ elif args.model_metric == 'XAD':
     explanation_map_extractor = axiom_paper_average_drop_explanation_map
 
 
-model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric, xmap_extractor=explanation_map_extractor)
+# subset_dataset.indices
+for (x, y) in tqdm(val_loader):
+
+    forward_handler = target_layer.register_forward_hook(forward_hook)
+    backward_handler = target_layer.register_full_backward_hook(backward_hook)
+    x = x.to(device=constants.DEVICE, dtype=constants.DTYPE)  # move to device
+    y = y.to(device=constants.DEVICE, dtype=constants.DTYPE)
+
+    print('--------- Forward Passing ------------')
+    # use the label to propagate NOTE: another case
+
+    internal_R_cams, output = model(x, args.target_layer, [None], axiomMode=True if args.XRelevanceCAM else False)
+    r_cams = internal_R_cams[0] # for each image in a batch
+    r_cams = tensor2image(r_cams)
+
+    predictions = torch.argmax(output, dim=1)
+
+    # denormalize the image NOTE: must be placed after forward passing
+    x = denorm(x)
+    print('--------- Generating relevance-cam Heatmap')
+    for i in range(x.shape[0]):   
+
+        #ignore the wrong prediction
+        if predictions[i] != y[i]:
+            continue
+
+        _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename
+        dest = os.path.join(origin_dest, '{}/{}'.format(args.model, _filename[:-4]))
+        img = get_source_img(_filename)
+
+        # save the original image in parallel
+        if not os.path.exists(dest):
+            os.makedirs(dest)
+            plt.axis('off')
+            plt.imshow(img)
+            plt.savefig(os.path.join(dest, 'original.jpeg'), bbox_inches='tight')
+    
+        plt.ioff()
+        logger = logging.getLogger()
+        old_level = logger.level
+        logger.setLevel(100)
+
+        # save the saliency map of the image
+        r_cam = r_cams[i,:]
+        mask = plt.imshow(r_cam, cmap='seismic')
+        overlayed_image = plt.imshow(img, alpha=.5)
+        plt.axis('off')
+        plt.savefig(os.path.join(dest, '{}_{}_{}_seismic.jpeg'.format(CAM_NAME, args.target_layer, predictions[i])), bbox_inches='tight')
+
+        # save the segmentation of the image
+        segmented_image = img*threshold(r_cam)[...,np.newaxis]
+        segmented_image = plt.imshow(segmented_image)
+        plt.axis('off')
+        plt.savefig(os.path.join(dest, '{}_{}_{}_segmentation.jpeg'.format(CAM_NAME, args.target_layer, predictions[i])), bbox_inches='tight')
+        plt.close()
+
+        logger.setLevel(old_level)
+
+        # update the sequential index for next iterations
+        forward_handler.remove()
+        backward_handler.remove()
+    
+    #BOOKING
+    STARTING_INDEX += x.shape[0]
+
+# model_metric_evaluation(args, val_set, val_loader, model, inplace_normalize, metrics_logger=metric, xmap_extractor=explanation_map_extractor)

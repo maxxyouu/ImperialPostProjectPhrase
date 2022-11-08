@@ -83,12 +83,16 @@ def encode_labels(target):
 
 def encode_segmentation_labels(target):
     transformer = transforms.Compose([transforms.PILToTensor()
-                                    ,transforms.CenterCrop(constants.CENTRE_CROP_SIZE)])
+                                    ,transforms.Resize(constants.CENTRE_CROP_SIZE)])
     return transformer(target)
 
 def collate_function(inputs):
     _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
-    targets = torch.stack([encode_labels(_input[1]) for _input in inputs], dim=0)
+    # samples = []
+    # for _input in inputs:
+    #     sample = encode_labels(_input[1])
+    #     samples.append(sample)
+    targets = torch.stack([encode_labels(_input[1])[-1] for _input in inputs], dim=0)
     return _inputs, targets
 
 
@@ -389,11 +393,11 @@ if __name__ == '__main__':
     trainVal_set = torchvision.datasets.VOCDetection(
         root=os.path.join(os.getcwd(), 'data')
         ,year='2012'
-        ,image_set='train'
+        ,image_set='trainval'
         ,download=False
         ,transform=transforms.Compose([
             transforms.ToTensor(),
-            transforms.CenterCrop(300)
+            transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE, constants.PASCAL_CENTRE_CROP_SIZE))
         ])
     )
     trainval_loader = DataLoader(trainVal_set
@@ -401,6 +405,6 @@ if __name__ == '__main__':
         ,shuffle=True
         ,collate_fn=collate_function
     )
-    sample, label = next(iter(trainval_loader)) # each object inside the label['annotation']['object'] list
+    # sample, label = next(iter(trainval_loader)) # each object inside the label['annotation']['object'] list
     trainValMean, trainValStd = get_mean_and_std(trainval_loader)
     print('mu: {}, std: {}'.format(trainValMean, trainValStd))
