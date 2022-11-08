@@ -88,10 +88,6 @@ def encode_segmentation_labels(target):
 
 def collate_function(inputs):
     _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
-    # samples = []
-    # for _input in inputs:
-    #     sample = encode_labels(_input[1])
-    #     samples.append(sample)
     targets = torch.stack([encode_labels(_input[1])[-1] for _input in inputs], dim=0)
     return _inputs, targets
 

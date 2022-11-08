@@ -162,6 +162,7 @@ elif args.dataset == constants.PASCAL_VOC2012:
                 [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
                 [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B])
             ])
+        
         #,target_transform=encode_segmentation_labels # for segmentation only
     )
     # only a subset of data are used
@@ -179,6 +180,7 @@ val_loader = DataLoader(
     ,batch_size=args.batch_size
     # ,shuffle=True
     ,sampler=sequentialSampler
+    ,collate_fn=collate_function # for voc2012
 )
 
 ########################## DATA ENDS ##########################
@@ -200,7 +202,7 @@ elif args.model_metric == 'XAD':
 
 
 # subset_dataset.indices
-for (x, y) in tqdm(val_loader):
+for x, y in val_loader:
 
     forward_handler = target_layer.register_forward_hook(forward_hook)
     backward_handler = target_layer.register_full_backward_hook(backward_hook)
@@ -222,8 +224,8 @@ for (x, y) in tqdm(val_loader):
     for i in range(x.shape[0]):   
 
         #ignore the wrong prediction
-        if predictions[i] != y[i]:
-            continue
+        # if predictions[i] != y[i]:
+        #     continue
 
         _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename
         dest = os.path.join(origin_dest, '{}/{}'.format(args.model, _filename[:-4]))
