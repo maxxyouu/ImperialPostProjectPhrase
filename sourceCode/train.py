@@ -23,7 +23,7 @@ my_parser.add_argument('--batch_size',
                         type=int, default=2,
                         help='batch size to be used for training / testing')             
 my_parser.add_argument('--epochs',
-                        type=int, default=3,
+                        type=int, default=100,
                         help='training epochs')   
 my_parser.add_argument('--earlyStoppingPatience',
                         type=int, default=10,
