@@ -369,7 +369,7 @@ def get_all_imgs(filenames, indices, img_size=constants.IMGNET_CENTRE_CROP_SIZE)
 
     Args:
         filenames (_type_): a whole list of filenames
-        indices (_type_): a subset of indices that retrive the files
+        indices (_type_): a subset of indices that retrive the files, can be the subset that is correctly classified
         img_size (_type_, optional): image size to be resized to. Defaults to constants.IMGNET_CENTRE_CROP_SIZE.
 
     Returns:
@@ -388,13 +388,14 @@ def get_all_imgs(filenames, indices, img_size=constants.IMGNET_CENTRE_CROP_SIZE)
     return batch_imgs
 
 def get_correct_predictions(Yci, input, labels, cams):
+    """Return the correctly classified inputs and cams"""
     x, y = deepcopy(input), deepcopy(labels)
     correct_prediction_indices = (torch.argmax(Yci, dim=1) == y)
     Yci = Yci[correct_prediction_indices,:]
     Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
     x = x[correct_prediction_indices, :]
     cams = cams[correct_prediction_indices, :]
-    return x, Yci, cams
+    return x, Yci, cams, correct_prediction_indices
 
 if __name__ == '__main__':
     # get the mean and variance
