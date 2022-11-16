@@ -395,7 +395,7 @@ def get_correct_predictions(Yci, input, labels, cams):
     Yci = torch.max(Yci, dim=1)[0].unsqueeze(1)
     x = x[correct_prediction_indices, :]
     cams = cams[correct_prediction_indices, :]
-    return x, Yci, cams, correct_prediction_indices
+    return x, Yci, cams, correct_prediction_indices.cpu().detach().numpy()
 
 if __name__ == '__main__':
     # get the mean and variance
