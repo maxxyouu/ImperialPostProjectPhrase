@@ -262,12 +262,12 @@ for x, y in val_loader:
     print('--------- Generating relevance-cam Heatmap')
     for i in range(x.shape[0]):   
 
-        #ignore the wrong prediction
-        # if predictions[i] != y[i]:
-        #     continue
+        # ignore the wrong prediction
+        if args.correctPredictionsOnly and predictions[i] != y[i]:
+            continue
 
         # _filename = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename for voc2012
-        _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename
+        _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename for Imagnet2012
 
         dest = os.path.join(origin_dest, '{}/{}'.format(args.model, _filename[:-4]))
         img = get_source_img(_filename)
