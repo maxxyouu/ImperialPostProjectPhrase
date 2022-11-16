@@ -553,6 +553,7 @@ class ResNet(nn.Module):
         Returns:
             _type_: _description_
         """
+        print('from resnetTimm.py')
         # x = self.forward_features(x)
         # z = self.forward_head(x)
         # x_origin = deepcopy(x)

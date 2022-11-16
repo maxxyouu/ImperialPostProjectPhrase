@@ -319,11 +319,11 @@ class ResNet(nn.Module):
         if mode == 'output':
             return z
 
-        # R = self.CLRP(z, target_class)
-        if contrastive_mode == 'SGLRP':
-            R = self.SGCLR(z, target_class)
-        elif contrastive_mode == 'CLRP':
-            R = self.CLRP(z, target_class)
+        R = self.CLRP(z, target_class)
+        # if contrastive_mode == 'SGLRP':
+        #     R = self.SGCLR(z, target_class)
+        # elif contrastive_mode == 'CLRP':
+            # R = self.CLRP(z, target_class)
         R = self.fc.relprop(R, 1)
         R = R.reshape_as(self.avgpool.Y)
         R4 = self.avgpool.relprop(R, 1)

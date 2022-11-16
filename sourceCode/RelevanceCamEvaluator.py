@@ -51,7 +51,7 @@ my_parser.add_argument('--alpha',
                         type=int, default=1,
                         help='alpha in the propagation rule')  
 my_parser.add_argument('--dataset',
-                        type=str, default=constants.PASCAL_VOC2012,
+                        type=str, default=constants.IMGNET2012,
                         help='dataset to be tested')
 my_parser.add_argument('--model_metric',
                         type=str, default='AD',
@@ -143,11 +143,23 @@ if args.dataset == constants.IMGNET2012:
     # 5000 images for evaluation
     train_size = int(len(val_set)*0.9)
     val_size = len(val_set) - train_size
+
+    # indices of the sampled images
     _, val_set = torch.utils.data.random_split(val_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
 
     inplace_normalize = transforms.Normalize([constants.IMGNET_DATA_MEAN_R, constants.IMGNET_DATA_MEAN_G, constants.IMGNET_DATA_MEAN_B],
                                              [constants.IMGNET_DATA_STD_R, constants.IMGNET_DATA_STD_G, constants.IMGNET_DATA_STD_B], inplace=True)
     filenames = val_set.dataset.imgs
+
+    sequentialSampler = SequentialSampler(val_set)
+    val_loader = DataLoader(
+        val_set
+        ,batch_size=args.batch_size
+        # ,shuffle=True
+        ,sampler=sequentialSampler
+        # ,collate_fn=collate_function # for voc2012 only
+    )
+    indices = val_set.indices
 
 elif args.dataset == constants.PASCAL_VOC2012:
     trainval_set = torchvision.datasets.VOCDetection(
@@ -168,26 +180,53 @@ elif args.dataset == constants.PASCAL_VOC2012:
     # only a subset of data are used
     train_size = int(len(trainval_set)*0.8)
     val_size = len(trainval_set) - train_size
+
+    # indices of the sampled images from the validation set
     _, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
 
     inplace_normalize = transforms.Normalize([constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
                                              [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B], inplace=True)
     filenames = val_set.dataset.images
+    indices = val_set.indices
 
-sequentialSampler = SequentialSampler(val_set)
-val_loader = DataLoader(
-    val_set
-    ,batch_size=args.batch_size
-    # ,shuffle=True
-    ,sampler=sequentialSampler
-    ,collate_fn=collate_function # for voc2012
-)
+
+    # val_set = torchvision.datasets.VOCSegmentation(
+    #     root=constants.PASCAL_DATA_PATH
+    #     ,year='2012'
+    #     ,image_set='val'
+    #     ,download=False
+    #     ,transform=transforms.Compose([
+    #         transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE,constants.PASCAL_CENTRE_CROP_SIZE))
+    #         ,transforms.ToTensor()
+    #         ,transforms.Normalize(
+    #             [constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
+    #             [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B])
+    #         ])
+    #     #,target_transform=encode_segmentation_labels # for segmentation only
+    # )
+    # # only a subset of data are used
+    # train_size = int(len(trainval_set)*0.8)
+    # val_size = len(trainval_set) - train_size
+    # _, val_set = torch.utils.data.random_split(trainval_set, [train_size, val_size], generator=torch.Generator().manual_seed(constants.SEED))
+
+
+    # inplace_normalize = transforms.Normalize([constants.PASCAL_DATA_MEAN_R, constants.PASCAL_DATA_MEAN_G, constants.PASCAL_DATA_MEAN_B], 
+    #                                          [constants.PASCAL_DATA_STD_R, constants.PASCAL_DATA_STD_G, constants.PASCAL_DATA_STD_B], inplace=True)
+    # filenames = val_set.images
+
+    sequentialSampler = SequentialSampler(val_set)
+    val_loader = DataLoader(
+        val_set
+        ,batch_size=args.batch_size
+        # ,shuffle=True
+        ,sampler=sequentialSampler
+        ,collate_fn=collate_function #collate_function_voc2012_segs # for voc2012
+    )
 
 ########################## DATA ENDS ##########################
 
 ########################## EVALUATION STARTS ##########################
 print('Evaluation Begin')
-indices = val_set.indices
 STARTING_INDEX = 0
 
 if args.model_metric == 'AD':
@@ -211,8 +250,8 @@ for x, y in val_loader:
 
     print('--------- Forward Passing ------------')
     # use the label to propagate NOTE: another case
-
-    internal_R_cams, output = model(x, args.target_layer, [None], axiomMode=True if args.XRelevanceCAM else False)
+    targets = [None] # torch.argmax(y, dim=1) for voc2012
+    internal_R_cams, output = model(x, args.target_layer, targets, axiomMode=True if args.XRelevanceCAM else False)
     r_cams = internal_R_cams[0] # for each image in a batch
     r_cams = tensor2image(r_cams)
 
@@ -227,7 +266,9 @@ for x, y in val_loader:
         # if predictions[i] != y[i]:
         #     continue
 
+        # _filename = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename for voc2012
         _filename, label = filenames[indices[STARTING_INDEX + i]] # use the indices to get the filename
+
         dest = os.path.join(origin_dest, '{}/{}'.format(args.model, _filename[:-4]))
         img = get_source_img(_filename)
 

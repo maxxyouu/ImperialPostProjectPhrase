@@ -87,9 +87,21 @@ def encode_segmentation_labels(target):
     return transformer(target)
 
 def collate_function(inputs):
+    """for detection dataset only"""
     _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
     targets = torch.stack([encode_labels(_input[1])[-1] for _input in inputs], dim=0)
     return _inputs, targets
+
+def collate_function_voc2012_segs(inputs):
+    """for detection dataset only"""
+    _inputs = torch.stack([_input[0] for _input in inputs], dim=0)
+    tensor_converter = transforms.Compose([
+        transforms.Resize((constants.PASCAL_CENTRE_CROP_SIZE,constants.PASCAL_CENTRE_CROP_SIZE)),
+        transforms.ToTensor()
+    ])
+    masks = torch.stack([tensor_converter(segs) for _, segs in inputs], dim = 0)
+
+    return _inputs, masks
 
 
 def get_nrows(file_name):

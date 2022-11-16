@@ -21,7 +21,7 @@ my_parser.add_argument('--model',
                         help='model to be used for training / testing')
 my_parser.add_argument('--batch_size',
                         type=int, default=2,
-                        help='batch size to be used for training / testing')             
+                        help='batch size to be used for training / testing')               
 my_parser.add_argument('--epochs',
                         type=int, default=100,
                         help='training epochs')   
