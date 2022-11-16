@@ -69,7 +69,7 @@ if not args.XRelevanceCAM: # and constants.WORK_ENV == 'LOCAL': # for debug purp
 print('--XRelevanceCAM: {}'.format(args.XRelevanceCAM))
 
 if not args.correctPredictionsOnly:
-    args.correctPredictionsOnly = True #TODO: remove this before commit 
+    args.correctPredictionsOnly = False #TODO: remove this before commit 
 print('--correctPredictionsOnly: {}'.format(args.correctPredictionsOnly))
 
 print('--alpha: {}'.format(args.alpha))
