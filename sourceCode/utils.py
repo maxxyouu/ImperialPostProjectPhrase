@@ -83,7 +83,7 @@ def encode_labels(target):
 
 def encode_segmentation_labels(target):
     transformer = transforms.Compose([transforms.PILToTensor()
-                                    ,transforms.Resize(constants.CENTRE_CROP_SIZE)])
+                                    ,transforms.Resize(constants.PASCAL_CENTRE_CROP_SIZE)])
     return transformer(target)
 
 def collate_function(inputs):

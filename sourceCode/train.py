@@ -17,7 +17,7 @@ from utils import get_metric_scores, encode_labels
 ########################## PARSE SCRIPT ARGUMENTS STARTS ##########################
 my_parser = argparse.ArgumentParser(description='')
 my_parser.add_argument('--model',
-                        type=str, default='skresnext50_32x4d',
+                        type=str, default='resnet101',
                         help='model to be used for training / testing')
 my_parser.add_argument('--batch_size',
                         type=int, default=2,
